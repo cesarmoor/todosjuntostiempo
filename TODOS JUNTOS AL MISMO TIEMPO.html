@@ -1,0 +1,2532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todos juntos al mismo tiempo - Conecta con la Embriología</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            height: 90vh;
+            max-height: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #ff6b6b;
+            border-bottom: 3px solid #ff6b6b;
+            font-weight: 600;
+        }
+
+        .content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #fafafa;
+        }
+
+        .tab-content {
+            display: none;
+            height: 100%;
+            position: relative;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Sección de deslizamiento */
+        .swipe-container {
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            padding-bottom: 80px; /* Espacio para los botones de acción */
+        }
+
+        .cards-stack {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            height: 480px;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            cursor: grab;
+            overflow: hidden;
+            transform-origin: center bottom;
+        }
+
+        .card.dragging {
+            cursor: grabbing;
+            transition: none !important;
+        }
+
+        .card img {
+            width: 100%;
+            height: 55%;
+            object-fit: cover;
+            background: #e0e0e0;
+        }
+
+        .card-info {
+            padding: 15px;
+            height: 45%;
+            overflow-y: auto; 
+        }
+
+        .card-info h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .badge-estructura {
+            background: #42dca3;
+            color: white;
+        }
+        .badge-proceso {
+            background: #5dade2; 
+            color: white;
+        }
+        .badge-patologia {
+            background: #ff4458;
+            color: white;
+        }
+
+
+        .card-info p {
+            color: #666;
+            line-height: 1.4;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 11px;
+            color: #999;
+            margin-top: auto; 
+        }
+
+        .action-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .action-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .reject-btn {
+            border-color: #ff4458;
+            color: #ff4458;
+        }
+
+        .reject-btn:hover {
+            background: #ff4458;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .like-btn {
+            border-color: #42dca3;
+            color: #42dca3;
+        }
+
+        .like-btn:hover {
+            background: #42dca3;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .super-like-btn {
+            width: 40px;
+            height: 40px;
+            border-color: #3498db;
+            color: #3498db;
+            font-size: 16px;
+        }
+
+        .super-like-btn:hover {
+            background: #3498db;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Animaciones */
+        .swipe-right {
+            animation: swipeRight 0.5s ease-out forwards;
+        }
+
+        .swipe-left {
+            animation: swipeLeft 0.5s ease-out forwards;
+        }
+
+        .super-like-animation {
+            animation: superLike 0.5s ease-out forwards;
+        }
+
+        @keyframes swipeRight {
+            to {
+                transform: translateX(150%) rotate(30deg) !important; 
+                opacity: 0;
+            }
+        }
+
+        @keyframes swipeLeft {
+            to {
+                transform: translateX(-150%) rotate(-30deg) !important;
+                opacity: 0;
+            }
+        }
+
+        @keyframes superLike {
+            to {
+                transform: translateY(-150%) scale(0.5) !important;
+                opacity: 0;
+            }
+        }
+
+        /* Sección de matches */
+        .matches-container {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 15px;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .match-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .match-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .match-info {
+            padding: 10px;
+            flex-grow: 1; 
+        }
+
+        .match-info h4 {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .match-info p {
+            font-size: 11px;
+            color: #666;
+        }
+
+        /* Sección de chat */
+        .chat-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            max-width: 75%; 
+            padding: 10px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .message.user {
+            background: #ff6b6b;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.ai {
+            background: white;
+            color: #333;
+            align-self: flex-start;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .typing-indicator {
+            display: flex; 
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 18px;
+            background: white;
+            color: #333;
+            align-self: flex-start;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin: 5px 0;
+            border-bottom-left-radius: 5px;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #aaa;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing-bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-indicator span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing-bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1.0);
+            }
+        }
+
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .send-btn {
+            padding: 10px 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 40px 20px;
+            display: flex; 
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%; 
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        /* Match popup */
+        .match-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .match-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 300px;
+            margin: 20px;
+        }
+
+        .match-content h2 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .match-content p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .match-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+            
+            .app-container {
+                border-radius: 0;
+                height: 100vh;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>🧬👶 Todos juntos al mismo tiempo</h1>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('swipe', this)">Descubrir</button>
+            <button class="nav-tab" onclick="switchTab('matches', this)">Matches</button>
+            <button class="nav-tab" onclick="switchTab('chat', this)">Chat</button>
+        </div>
+
+        <div class="content">
+            <div id="swipe" class="tab-content active">
+                <div class="swipe-container">
+                    <div class="cards-stack" id="cards-container">
+                         <div class="empty-state" style="display:none;">
+                            <h3>No hay más perfiles</h3>
+                            <p>Has visto todos los perfiles disponibles</p>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn reject-btn" onclick="rejectCardManual()">✕</button>
+                        <button class="action-btn super-like-btn" onclick="superLikeCardManual()">⭐</button>
+                        <button class="action-btn like-btn" onclick="likeCardManual()">♥</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="matches" class="tab-content">
+                <div class="matches-container">
+                    <div class="matches-grid" id="matches-grid">
+                        <div class="empty-state">
+                            <h3>No hay matches aún</h3>
+                            <p>¡Sigue deslizando para encontrar matches!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chat" class="tab-content">
+                <div class="chat-container">
+                    <div class="chat-header" id="chat-header" style="display: none;">
+                        <img src="" alt="Profile" id="chat-avatar">
+                        <div>
+                            <h4 id="chat-name"></h4>
+                            <p style="font-size: 12px; opacity: 0.9;">En línea</p>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="empty-state">
+                            <h3>Selecciona un match</h3>
+                            <p>Elige un match para empezar a chatear</p>
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="ai-typing-indicator-template" style="display: none;">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="chat-input" id="chat-input" style="display: none;">
+                        <input type="text" placeholder="Escribe un mensaje..." id="message-input">
+                        <button class="send-btn" onclick="sendMessage()">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="match-popup" id="match-popup">
+        <div class="match-content">
+            <h2>¡Es un Match! 🎉</h2>
+            <p id="match-message">A ambos se gustaron. ¡Empiecen una conversación!</p>
+            <button class="match-btn" onclick="closeMatchPopup()">Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        // Perfiles de Embriología (Capítulos 1, 2, 3, 4 y 5 de Langman)
+        const profiles = [
+            // Capítulo 1: Introducción a la regulación y la señalización moleculares
+            {
+                id: 1, name: "Cromatina",
+                description: "Estructura de ADN y proteínas que regula la expresión génica. Se transforma en eucromatina para permitir la transcripción.",
+                image: "https://source.unsplash.com/400x300/?biology,chromatin,dna",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["ADN", "histonas", "expresión génica", "nucleosomas", "epigenética"]
+            },
+            {
+                id: 2, name: "Nucleosoma",
+                description: "Unidad básica de la cromatina, enrolla el ADN con histonas. Permite compactar el ADN y controlar su acceso.",
+                image: "https://source.unsplash.com/400x300/?biology,nucleosome,histone",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["histonas", "octámero", "compactación ADN"]
+            },
+            {
+                id: 3, name: "Eucromatina",
+                description: "Forma relajada de la cromatina que permite la transcripción activa.",
+                image: "https://source.unsplash.com/400x300/?biology,euchromatin,gene+expression",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["transcripción activa", "acetilación", "genes activos"]
+            },
+            {
+                id: 4, name: "Heterocromatina",
+                description: "Forma densa e inactiva de cromatina que impide la transcripción.",
+                image: "https://source.unsplash.com/400x300/?biology,heterochromatin,gene+silencing",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["silenciamiento génico", "condensación ADN"]
+            },
+            {
+                id: 5, name: "Promotor",
+                description: "Región del ADN donde inicia la transcripción al unirse la ARN polimerasa.",
+                image: "https://source.unsplash.com/400x300/?biology,gene+promoter,rna+polymerase",
+                type: "estructura", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["caja TATA", "ARN polimerasa", "inicio transcripción"]
+            },
+            {
+                id: 6, name: "Caja TATA",
+                description: "Secuencia específica del promotor donde se une la ARN polimerasa con ayuda de factores de transcripción.",
+                image: "https://source.unsplash.com/400x300/?genetics,TATA+box,promoter",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["promotor", "secuencia ADN", "ARN polimerasa", "transcripción"]
+            },
+            {
+                id: 7, name: "Factores de transcripción",
+                description: "Proteínas que regulan la expresión genética activando o inhibiendo genes.",
+                image: "https://source.unsplash.com/400x300/?biology,transcription+factor,protein",
+                type: "estructura", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["regulación génica", "activación", "represión", "proteínas ADN"]
+            },
+            {
+                id: 8, name: "Potenciadores",
+                description: "Secuencias reguladoras de ADN que aumentan la eficiencia de los promotores.",
+                image: "https://source.unsplash.com/400x300/?genetics,enhancer+sequence,dna",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["ADN regulador", "promotores", "eficiencia transcripción"]
+            },
+            {
+                id: 9, name: "Silenciadores",
+                description: "Secuencias de ADN que reprimen la transcripción génica.",
+                image: "https://source.unsplash.com/400x300/?genetics,silencer+sequence,dna",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["ADN regulador", "represión génica", "transcripción"]
+            },
+            {
+                id: 10, name: "Metilación del ADN",
+                description: "Modificación epigenética que inhibe la transcripción de genes.",
+                image: "https://source.unsplash.com/400x300/?biology,dna+methylation,epigenetics",
+                type: "proceso", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["epigenética", "silenciamiento génico", "modificación ADN"]
+            },
+            {
+                id: 11, name: "ARN nuclear (ARNn)",
+                description: "Transcrito inicial de un gen que incluye intrones y exones.",
+                image: "https://source.unsplash.com/400x300/?biology,rna,gene+transcription",
+                type: "estructura", chapter: "Capítulo 1", importance: "Media",
+                keywords: ["transcrito primario", "intrones", "exones", "procesamiento ARN"]
+            },
+            {
+                id: 12, name: "Empalme alternativo",
+                description: "Proceso que permite generar diferentes proteínas a partir de un solo gen.",
+                image: "https://source.unsplash.com/400x300/?biology,rna+splicing,alternative+splicing",
+                type: "proceso", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["procesamiento ARN", "diversidad proteica", "isoformas"]
+            },
+            {
+                id: 13, name: "Isoformas de empalme",
+                description: "Variantes de proteínas generadas por empalme alternativo.",
+                image: "https://source.unsplash.com/400x300/?biology,protein+isoforms,splicing",
+                type: "estructura", chapter: "Capítulo 1", importance: "Media",
+                keywords: ["proteínas variantes", "empalme alternativo", "diversidad funcional"]
+            },
+            {
+                id: 14, name: "Inducción",
+                description: "Proceso por el cual un tejido determina el destino de otro.",
+                image: "https://source.unsplash.com/400x300/?embryology,cell+induction,development",
+                type: "proceso", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["desarrollo embrionario", "destino celular", "señalización"]
+            },
+            {
+                id: 15, name: "Competencia",
+                description: "Capacidad de una célula para responder a señales inductivas.",
+                image: "https://source.unsplash.com/400x300/?biology,cell+signaling,competence",
+                type: "proceso", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["respuesta celular", "señales inductivas", "desarrollo"]
+            },
+            {
+                id: 16, name: "Interacciones epitelio-mesénquima",
+                description: "Comunicación entre capas celulares que regula la organogénesis.",
+                image: "https://source.unsplash.com/400x300/?embryology,epithelium,mesenchyme,organogenesis",
+                type: "proceso", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["organogénesis", "comunicación celular", "desarrollo órganos"]
+            },
+            {
+                id: 17, name: "Factores paracrinos",
+                description: "Moléculas señalizadoras que difunden entre células cercanas.",
+                image: "https://source.unsplash.com/400x300/?biology,paracrine+signaling,cell+communication",
+                type: "estructura", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["señalización celular", "moléculas difusibles", "comunicación local"]
+            },
+            {
+                id: 18, name: "Vía SHH",
+                description: "Ruta de señalización crucial para patrones embrionarios.",
+                image: "https://source.unsplash.com/400x300/?biology,signaling+pathway,hedgehog",
+                type: "proceso", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["Sonic Hedgehog", "patrones embrionarios", "desarrollo"]
+            },
+            {
+                id: 19, name: "Vía WNT",
+                description: "Ruta de señalización para polaridad y elongación celular.",
+                image: "https://source.unsplash.com/400x300/?biology,signaling+pathway,wnt",
+                type: "proceso", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["polaridad celular", "elongación", "desarrollo", "β-catenina"]
+            },
+            {
+                id: 20, name: "Vía Notch",
+                description: "Señalización yuxtacrina clave en la diferenciación celular.",
+                image: "https://source.unsplash.com/400x300/?biology,signaling+pathway,notch",
+                type: "proceso", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["diferenciación celular", "señalización yuxtacrina", "destino celular"]
+            },
+             // Patologías Capítulo 1
+            {
+                id: 21, name: "Síndrome de Rett",
+                description: "Mutación en genes de metilación del ADN, afecta el neurodesarrollo en mujeres.",
+                image: "https://source.unsplash.com/400x300/?medical,neurology,Rett+syndrome",
+                type: "patologia", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["MECP2", "metilación ADN", "neurodesarrollo", "genético"]
+            },
+            {
+                id: 22, name: "Síndrome de Prader-Willi",
+                description: "Error en la impronta genética del cromosoma paterno.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,Prader-Willi",
+                type: "patologia", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["impronta genética", "cromosoma 15", "obesidad", "hipotonía"]
+            },
+            {
+                id: 23, name: "Síndrome de Angelman",
+                description: "Error en la impronta genética del cromosoma materno.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,Angelman+syndrome",
+                type: "patologia", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["impronta genética", "UBE3A", "retraso desarrollo", "epilepsia"]
+            },
+            {
+                id: 24, name: "Cáncer (regulación génica)",
+                description: "Expresión aberrante de genes por mutaciones en promotores o silenciadores.",
+                image: "https://source.unsplash.com/400x300/?medical,cancer,gene+regulation",
+                type: "patologia", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["mutaciones", "promotores", "silenciadores", "expresión génica aberrante"]
+            },
+            {
+                id: 25, name: "Síndrome de Alagille",
+                description: "Mutaciones en la vía Notch que afectan órganos como el corazón y el hígado.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,Alagille+syndrome",
+                type: "patologia", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["vía Notch", "JAGGED1", "colestasis", "cardiopatía"]
+            },
+            {
+                id: 26, name: "Holoprosencefalia",
+                description: "Falla en SHH que impide la correcta división del cerebro anterior.",
+                image: "https://source.unsplash.com/400x300/?medical,brain+development,holoprosencephaly",
+                type: "patologia", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["vía SHH", "prosencéfalo", "división cerebral", "malformación"]
+            },
+            {
+                id: 27, name: "Craneosinostosis",
+                description: "Mutación en FGFR (relacionado a señales FGF) que causa cierre prematuro de suturas craneales.",
+                image: "https://source.unsplash.com/400x300/?medical,skull,craniosynostosis",
+                type: "patologia", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["FGFR", "suturas craneales", "cierre prematuro", "desarrollo óseo"]
+            },
+            {
+                id: 28, name: "Defectos del tubo neural",
+                description: "Mutaciones en la vía WNT/PCP alteran la convergencia celular.",
+                image: "https://source.unsplash.com/400x300/?medical,neural+tube+defect,spina+bifida",
+                type: "patologia", chapter: "Capítulo 1", importance: "Crítica",
+                keywords: ["vía WNT", "tubo neural", "convergencia celular", "anencefalia", "espina bífida"]
+            },
+            {
+                id: 29, name: "Focomelia por talidomida",
+                description: "Falla en interacciones epitelio-mesénquima por efecto teratogénico.",
+                image: "https://source.unsplash.com/400x300/?medical,history,thalidomide,phocomelia",
+                type: "patologia", chapter: "Capítulo 1", importance: "Histórica",
+                keywords: ["talidomida", "interacciones epitelio-mesénquima", "teratógeno", "desarrollo extremidades"]
+            },
+            {
+                id: 30, name: "Síndrome de Holt-Oram",
+                description: "Alteraciones en genes de señalización que afectan corazón y extremidades.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,Holt-Oram+syndrome",
+                type: "patologia", chapter: "Capítulo 1", importance: "Alta",
+                keywords: ["señalización TBX5", "desarrollo corazón", "desarrollo extremidades superiores"]
+            },
+
+            // Capítulo 2: Gametogénesis
+            {
+                id: 31, name: "Células germinales primordiales",
+                description: "Células precursoras de los gametos que migran al saco vitelino en la semana 2 y a las gónadas en la 5.",
+                image: "https://source.unsplash.com/400x300/?embryology,germ+cells,gametes",
+                type: "estructura", chapter: "Capítulo 2", importance: "Crítica",
+                keywords: ["CGP", "gametos", "migración", "saco vitelino", "gónadas"]
+            },
+            {
+                id: 32, name: "Epiblasto", 
+                description: "Capa del embrión que origina todas las capas germinales y las CGP. Capa superior del disco bilaminar.",
+                image: "https://source.unsplash.com/400x300/?embryology,epiblast,embryonic+disc",
+                type: "estructura", chapter: "Capítulo 2 y 4", importance: "Crítica",
+                keywords: ["embrión", "capas germinales", "CGP", "desarrollo temprano", "disco bilaminar"]
+            },
+            {
+                id: 33, name: "Estría primitiva", 
+                description: "Engrosamiento celular transitorio en la línea media de la superficie dorsal del Epiblasto del embrión, visible al inicio de la tercera semana. Es el punto de inicio de la gastrulación y permite la migración celular para formar las tres capas germinativas.",
+                image: "https://source.unsplash.com/400x300/?embryology,primitive+streak,gastrulation",
+                type: "estructura", chapter: "Capítulo 2, 3 y 5", importance: "Crítica", 
+                keywords: ["gastrulación", "migración celular", "mesodermo", "epiblasto", "línea primitiva", "nodo primitivo", "tercera semana"]
+            },
+            {
+                id: 34, name: "Saco vitelino", 
+                description: "Sitio temporal donde migran las CGP antes de llegar a las gónadas. Contribuye a membranas y estructuras de soporte.",
+                image: "https://source.unsplash.com/400x300/?embryology,yolk+sac",
+                type: "estructura", chapter: "Capítulo 2, 3 y 4", importance: "Media", // Capítulo 3 lo implica, 4 lo detalla (primario, secundario, terciario)
+                keywords: ["CGP", "migración", "nutrición temprana", "anexos embrionarios", "hipoblasto", "saco vitelino primario", "saco vitelino secundario"]
+            },
+            {
+                id: 35, name: "Gónadas en desarrollo",
+                description: "Órganos donde maduran las CGP en gametos.",
+                image: "https://source.unsplash.com/400x300/?embryology,gonads,ovary,testis",
+                type: "estructura", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["ovarios", "testículos", "gametogénesis", "maduración CGP"]
+            },
+            {
+                id: 36, name: "Meiosis",
+                description: "División celular que reduce el número de cromosomas a la mitad en gametos.",
+                image: "https://source.unsplash.com/400x300/?biology,cell+division,meiosis",
+                type: "proceso", chapter: "Capítulo 2", importance: "Crítica",
+                keywords: ["división celular", "cromosomas", "gametos", "haploide", "variabilidad genética"]
+            },
+            {
+                id: 37, name: "Citodiferenciación",
+                description: "Proceso mediante el cual los gametos adquieren su forma y función final.",
+                image: "https://source.unsplash.com/400x300/?biology,cell+differentiation,gamete",
+                type: "proceso", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["gametos", "maduración", "especialización celular", "forma funcional"]
+            },
+            {
+                id: 38, name: "Espermatogonia",
+                description: "Célula germinal masculina que sufre mitosis y luego meiosis.",
+                image: "https://source.unsplash.com/400x300/?embryology,spermatogonia,sperm",
+                type: "estructura", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["célula germinal", "masculino", "mitosis", "meiosis", "espermatogénesis"]
+            },
+            {
+                id: 39, name: "Ovogonia",
+                description: "Célula germinal femenina que inicia meiosis y se detiene hasta la pubertad.",
+                image: "https://source.unsplash.com/400x300/?embryology,oogonia,ovum",
+                type: "estructura", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["célula germinal", "femenino", "meiosis", "pubertad", "ovogénesis"]
+            },
+            {
+                id: 40, name: "Ovocito primario",
+                description: "Célula detenida en profase I hasta la ovulación.",
+                image: "https://source.unsplash.com/400x300/?embryology,primary+oocyte",
+                type: "estructura", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["profase I", "ovulación", "meiosis I", "gameto femenino"]
+            },
+            {
+                id: 41, name: "Ovocito secundario", 
+                description: "Célula detenida en metafase II hasta la fecundación. Es liberada desde el ovario durante la ovulación.",
+                image: "https://source.unsplash.com/400x300/?embryology,secondary+oocyte,ovulation",
+                type: "estructura", chapter: "Capítulo 2 y 3", importance: "Crítica",
+                keywords: ["metafase II", "fecundación", "meiosis II", "óvulo", "ovulación"]
+            },
+            {
+                id: 42, name: "Cuerpo polar",
+                description: "Subproducto celular de la meiosis femenina que se degenera.",
+                image: "https://source.unsplash.com/400x300/?embryology,polar+body,oogenesis",
+                type: "estructura", chapter: "Capítulo 2", importance: "Media",
+                keywords: ["meiosis femenina", "degeneración", "ovogénesis", "subproducto"]
+            },
+            {
+                id: 43, name: "Espermátide",
+                description: "Producto haploide de la meiosis que se convierte en espermatozoide.",
+                image: "https://source.unsplash.com/400x300/?embryology,spermatid",
+                type: "estructura", chapter: "Capítulo 2", importance: "Media",
+                keywords: ["haploide", "meiosis masculina", "espermiogénesis", "precursor espermatozoide"]
+            },
+            {
+                id: 44, name: "Espermiogénesis",
+                description: "Transformación de espermátides en espermatozoides maduros.",
+                image: "https://source.unsplash.com/400x300/?embryology,spermiogenesis,sperm+maturation",
+                type: "proceso", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["espermátide", "espermatozoide", "maduración", "citodiferenciación"]
+            },
+            {
+                id: 45, name: "Zona pelúcida", 
+                description: "Capa de glicoproteínas que rodea al ovocito y es clave en la fecundación. Debe eliminarse para la implantación.",
+                image: "https://source.unsplash.com/400x300/?embryology,zona+pellucida,oocyte",
+                type: "estructura", chapter: "Capítulo 2 y 3", importance: "Crítica",
+                keywords: ["glicoproteínas", "ovocito", "fecundación", "reacción acrosómica", "eclosión"]
+            },
+            {
+                id: 46, name: "Corona radiada",
+                description: "Capa de células foliculares que rodea al ovocito.",
+                image: "https://source.unsplash.com/400x300/?embryology,corona+radiata,follicle+cells",
+                type: "estructura", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["células foliculares", "ovocito", "protección", "nutrición"]
+            },
+            {
+                id: 47, name: "Acrosoma",
+                description: "Organelo del espermatozoide que permite penetrar la zona pelúcida.",
+                image: "https://source.unsplash.com/400x300/?embryology,acrosome,sperm",
+                type: "estructura", chapter: "Capítulo 2", importance: "Crítica",
+                keywords: ["espermatozoide", "enzimas", "penetración", "zona pelúcida", "fecundación"]
+            },
+            {
+                id: 48, name: "Ovulación", 
+                description: "Liberación del ovocito secundario desde el ovario, ocurre alrededor del día 14 del ciclo, hacia la trompa uterina.",
+                image: "https://source.unsplash.com/400x300/?biology,ovulation,oocyte+release",
+                type: "proceso", chapter: "Capítulo 2 y 3", importance: "Crítica",
+                keywords: ["ovocito secundario", "trompa uterina", "ciclo ovárico", "liberación", "fimbrias"]
+            },
+            {
+                id: 49, name: "Menarquia",
+                description: "Inicio de la ovulación en la pubertad femenina.",
+                image: "https://source.unsplash.com/400x300/?female+puberty,menarche,menstruation",
+                type: "proceso", chapter: "Capítulo 2", importance: "Media",
+                keywords: ["ovulación", "pubertad femenina", "ciclo menstrual", "inicio fertilidad"]
+            },
+            {
+                id: 50, name: "Espermarquia",
+                description: "Inicio de la producción de espermatozoides en la pubertad masculina.",
+                image: "https://source.unsplash.com/400x300/?male+puberty,spermarche,sperm+production",
+                type: "proceso", chapter: "Capítulo 2", importance: "Media",
+                keywords: ["espermatozoides", "pubertad masculina", "espermatogénesis", "inicio fertilidad"]
+            },
+            {
+                id: 51, name: "Teratoma", 
+                description: "Tumor de células germinales fuera de lugar, derivado de CGP migrantes. Puede contener tejidos de las tres capas germinativas. Los teratomas sacrococcígeos se originan de remanentes de la estría primitiva.",
+                image: "https://source.unsplash.com/400x300/?medical,tumor,teratoma",
+                type: "patologia", chapter: "Capítulo 2 y 5", importance: "Alta",
+                keywords: ["tumor", "células germinales", "CGP", "migración anómala", "tejidos múltiples", "sacrococcígeo", "estría primitiva"]
+            },
+            {
+                id: 52, name: "Síndrome de Turner",
+                description: "Monosomía X que afecta la ovogénesis y desarrollo gonadal.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,Turner+syndrome",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["monosomía X", "45,X", "ovogénesis", "desarrollo gonadal", "infertilidad femenina"]
+            },
+            {
+                id: 53, name: "Síndrome de Klinefelter",
+                description: "XXY; provoca atrofia testicular y espermatogénesis deficiente.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,Klinefelter+syndrome",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["XXY", "47,XXY", "atrofia testicular", "espermatogénesis deficiente", "infertilidad masculina"]
+            },
+            {
+                id: 54, name: "Azoospermia",
+                description: "Ausencia de espermatozoides por falla en la espermatogénesis.",
+                image: "https://source.unsplash.com/400x300/?medical,infertility,azoospermia",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["ausencia espermatozoides", "espermatogénesis", "infertilidad masculina", "falla testicular"]
+            },
+            {
+                id: 55, name: "Anovulación",
+                description: "Falla en la liberación del ovocito, relacionada con infertilidad.",
+                image: "https://source.unsplash.com/400x300/?medical,infertility,anovulation",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["falla ovulación", "liberación ovocito", "infertilidad femenina", "ciclo irregular"]
+            },
+            {
+                id: 56, name: "Fallo gonadal prematuro",
+                description: "Cese temprano de la función ovárica o testicular.",
+                image: "https://source.unsplash.com/400x300/?medical,hormones,gonadal+failure",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["cese función gonadal", "menopausia precoz", "andropausia precoz", "infertilidad"]
+            },
+            {
+                id: 57, name: "Síndrome de Swyer",
+                description: "Cariotipo XY con gónadas disgenéticas femeninas.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,Swyer+syndrome",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["cariotipo XY", "gónadas disgenéticas", "fenotipo femenino", "SRY", "infertilidad"]
+            },
+            {
+                id: 58, name: "Síndrome de Morris",
+                description: "Insensibilidad a andrógenos en personas XY, fenotipo femenino.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,androgen+insensitivity",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["insensibilidad andrógenos", "AIS", "XY", "fenotipo femenino", "receptor androgénico"]
+            },
+            {
+                id: 59, name: "Disgenesia gonadal",
+                description: "Desarrollo anómalo de las gónadas, causa de infertilidad.",
+                image: "https://source.unsplash.com/400x300/?medical,genetics,gonadal+dysgenesis",
+                type: "patologia", chapter: "Capítulo 2", importance: "Alta",
+                keywords: ["desarrollo anómalo gónadas", "infertilidad", "alteración hormonal", "ovarios", "testículos"]
+            },
+            {
+                id: 60, name: "Mosaicismo cromosómico",
+                description: "Errores en la meiosis pueden causar individuos con células de distinto cariotipo.",
+                image: "https://source.unsplash.com/400x300/?genetics,chromosome,mosaicism",
+                type: "patologia", chapter: "Capítulo 2", importance: "Media",
+                keywords: ["errores meiosis", "cariotipo mixto", "no disyunción mitótica", "variabilidad fenotípica"]
+            },
+
+            // Capítulo 3
+            {
+                id: 61, name: "Fimbrias",
+                description: "Estructuras en forma de dedos al final de la trompa de Falopio que capturan el ovocito tras la ovulación.",
+                image: "https://source.unsplash.com/400x300/?anatomy,fallopian+tube,fimbriae",
+                type: "estructura", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["trompa de Falopio", "captura ovocito", "ovulación"]
+            },
+            {
+                id: 62, name: "Esperma", 
+                description: "Gameto masculino maduro y móvil que busca fecundar al ovocito.",
+                image: "https://source.unsplash.com/400x300/?science,sperm,gamete",
+                type: "estructura", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["gameto masculino", "fecundación", "móvil", "haploide"]
+            },
+            {
+                id: 63, name: "Capacitación espermática",
+                description: "Proceso de acondicionamiento final que ocurre en el tracto reproductor femenino y prepara al esperma para fecundar.",
+                image: "https://source.unsplash.com/400x300/?biology,sperm+capacitation,fertilization",
+                type: "proceso", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["tracto femenino", "acondicionamiento esperma", "fecundación"]
+            },
+            {
+                id: 64, name: "Reacción acrosómica",
+                description: "Liberación de enzimas del acrosoma del espermatozoide para penetrar la zona pelúcida del ovocito.",
+                image: "https://source.unsplash.com/400x300/?biology,acrosome+reaction,sperm+fertilization",
+                type: "proceso", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["acrosoma", "enzimas", "zona pelúcida", "penetración ovocito"]
+            },
+            {
+                id: 65, name: "Fecundación",
+                description: "Unión del ovocito y el espermatozoide, usualmente en la ampolla de la trompa de Falopio.",
+                image: "https://source.unsplash.com/400x300/?embryology,fertilization,zygote",
+                type: "proceso", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["unión gametos", "ampolla", "trompa Falopio", "cigoto"]
+            },
+            {
+                id: 66, name: "Cigoto",
+                description: "Célula diploide resultante de la fecundación, el primer estadio del embrión.",
+                image: "https://source.unsplash.com/400x300/?embryology,zygote,cell",
+                type: "estructura", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["diploide", "fecundación", "embrión temprano", "segmentación"]
+            },
+            {
+                id: 67, name: "Segmentación",
+                description: "Serie de divisiones mitóticas tempranas del cigoto sin crecimiento celular significativo, formando blastómeros.",
+                image: "https://source.unsplash.com/400x300/?embryology,cleavage,mitosis,blastomere",
+                type: "proceso", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["divisiones mitóticas", "cigoto", "blastómeros", "mórula"]
+            },
+            {
+                id: 68, name: "Mórula",
+                description: "Esfera sólida de blastómeros (usualmente 16-32 células) que aparece alrededor del día 3 post-fecundación.",
+                image: "https://source.unsplash.com/400x300/?embryology,morula,blastomere",
+                type: "estructura", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["blastómeros", "segmentación", "día 3", "compactación"]
+            },
+            {
+                id: 69, name: "Compactación",
+                description: "Proceso en el que las células externas de la mórula se adhieren estrechamente mediante uniones intercelulares, aplanándose y polarizándose.",
+                image: "https://source.unsplash.com/400x300/?embryology,compaction,morula+development",
+                type: "proceso", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["mórula", "adhesión celular", "blastocisto", "diferenciación temprana"]
+            },
+            {
+                id: 70, name: "Blastocisto",
+                description: "Estructura formada alrededor del día 4-5, con una cavidad central (blastocele) y dos grupos celulares diferenciados: embrioblasto y trofoblasto.",
+                image: "https://source.unsplash.com/400x300/?embryology,blastocyst,embryo+implantation",
+                type: "estructura", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["blastocele", "embrioblasto", "trofoblasto", "implantación"]
+            },
+            {
+                id: 71, name: "Blastocele",
+                description: "Cavidad llena de líquido que se forma en el interior del blastocisto.",
+                image: "https://source.unsplash.com/400x300/?embryology,blastocoele,blastocyst+cavity",
+                type: "estructura", chapter: "Capítulo 3", importance: "Media",
+                keywords: ["cavidad blastocisto", "líquido", "desarrollo temprano"]
+            },
+            {
+                id: 72, name: "Embrioblasto", 
+                description: "Grupo de células internas del blastocisto (masa celular interna) que formarán el embrión propiamente dicho. En la segunda semana, se diferencia en epiblasto e hipoblasto.",
+                image: "https://source.unsplash.com/400x300/?embryology,embryoblast,inner+cell+mass",
+                type: "estructura", chapter: "Capítulo 3 y 4", importance: "Crítica",
+                keywords: ["masa celular interna", "blastocisto", "formación embrión", "pluripotente", "epiblasto", "disco bilaminar"]
+            },
+            {
+                id: 73, name: "Trofoectodermo", 
+                description: "Capa externa de células del blastocisto que dará origen a la parte embrionaria de la placenta y membranas extraembrionarias. Se diferencia en citotrofoblasto y sincitiotrofoblasto.",
+                image: "https://source.unsplash.com/400x300/?embryology,trophectoderm,trophoblast,placenta",
+                type: "estructura", chapter: "Capítulo 3 y 4", importance: "Crítica",
+                keywords: ["capa externa blastocisto", "placenta", "implantación", "hCG", "citotrofoblasto", "sincitiotrofoblasto"]
+            },
+            {
+                id: 74, name: "Eclosión del blastocisto",
+                description: "Proceso por el cual el blastocisto se libera de la zona pelúcida, usualmente alrededor del día 5-6, para poder implantarse en el endometrio.",
+                image: "https://source.unsplash.com/400x300/?embryology,blastocyst+hatching,implantation",
+                type: "proceso", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["blastocisto", "zona pelúcida", "implantación", "liberación"]
+            },
+            {
+                id: 75, name: "Implantación",
+                description: "Proceso de fijación y anidación del blastocisto al endometrio uterino, que comienza al final de la primera semana (día 6-7) y se completa en la segunda.",
+                image: "https://source.unsplash.com/400x300/?embryology,implantation,endometrium",
+                type: "proceso", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["blastocisto", "endometrio", "fijación", "desarrollo placenta"]
+            },
+            {
+                id: 76, name: "Endometrio",
+                description: "Capa mucosa interna del útero, ricamente vascularizada y glandular, donde se implanta el blastocisto y se desarrolla la placenta.",
+                image: "https://source.unsplash.com/400x300/?anatomy,endometrium,uterus",
+                type: "estructura", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["útero", "implantación", "placenta", "ciclo menstrual"]
+            },
+            {
+                id: 77, name: "Hormona hCG",
+                description: "Gonadotropina coriónica humana, secretada por el sincitiotrofoblasto (derivado del trofoblasto) poco después de la implantación. Mantiene el cuerpo lúteo.",
+                image: "https://source.unsplash.com/400x300/?medical,hormone,hCG,pregnancy",
+                type: "estructura", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["gonadotropina coriónica", "sincitiotrofoblasto", "cuerpo lúteo", "prueba embarazo"]
+            },
+            {
+                id: 78, name: "Cuerpo lúteo",
+                description: "Estructura endocrina temporal en el ovario, formada a partir del folículo ovárico después de la ovulación. Secreta progesterona (y estrógenos) para mantener el endometrio preparado para el embarazo.",
+                image: "https://source.unsplash.com/400x300/?anatomy,corpus+luteum,ovary,progesterone",
+                type: "estructura", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["ovario", "progesterona", "mantenimiento endometrio", "embarazo temprano"]
+            },
+            {
+                id: 79, name: "Fertilización fallida",
+                description: "Ausencia de unión entre ovocito y espermatozoide, o falla en la activación del ovocito.",
+                image: "https://source.unsplash.com/400x300/?medical,infertility,failed+fertilization",
+                type: "patologia", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["infertilidad", "falla unión gametos", "activación ovocito"]
+            },
+            {
+                id: 80, name: "Poliespermia",
+                description: "Fertilización de un ovocito por más de un esperma, produce células triploides no viables.",
+                image: "https://source.unsplash.com/400x300/?embryology,polyspermy,abnormal+fertilization",
+                type: "patologia", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["fertilización múltiple", "cigoto triploide", "no viable", "bloqueo polispermia"]
+            },
+            {
+                id: 81, name: "Embarazo ectópico",
+                description: "Implantación del blastocisto fuera de la cavidad uterina, más comúnmente en la trompa de Falopio (embarazo tubárico).",
+                image: "https://source.unsplash.com/400x300/?medical,pregnancy,ectopic+pregnancy",
+                type: "patologia", chapter: "Capítulo 3", importance: "Crítica",
+                keywords: ["implantación anómala", "trompa Falopio", "riesgo vital materno"]
+            },
+            {
+                id: 82, name: "Mola hidatiforme", 
+                description: "Embarazo anómalo caracterizado por la proliferación anormal del trofoblasto, con o sin desarrollo embrionario. Puede ser completa (sin embrión, solo trofoblasto proliferante) o parcial.",
+                image: "https://source.unsplash.com/400x300/?medical,pregnancy,hydatidiform+mole",
+                type: "patologia", chapter: "Capítulo 3 y 4", importance: "Alta",
+                keywords: ["trofoblasto anormal", "embarazo molar", "sin embrión viable", "hCG elevada", "mola completa"]
+            },
+            {
+                id: 83, name: "Fallo en la eclosión",
+                description: "Si el blastocisto no logra salir de la zona pelúcida, no puede implantarse en el endometrio.",
+                image: "https://source.unsplash.com/400x300/?embryology,blastocyst+hatching+failure,implantation+failure",
+                type: "patologia", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["eclosión blastocisto", "zona pelúcida persistente", "falla implantación"]
+            },
+            {
+                id: 84, name: "Implantación superficial", 
+                description: "Implantación del blastocisto de forma muy superficial en el endometrio o demasiado cerca del orificio cervical interno, lo que puede aumentar el riesgo de aborto espontáneo o placenta previa.",
+                image: "https://source.unsplash.com/400x300/?medical,pregnancy,superficial+implantation",
+                type: "patologia", chapter: "Capítulo 3", importance: "Media",
+                keywords: ["implantación anómala", "riesgo aborto", "placenta previa"]
+            },
+            {
+                id: 85, name: "Baja producción de hCG", 
+                description: "Niveles insuficientes de hormona hCG, a menudo asociados con embarazos no viables, fallo del cuerpo lúteo o disfunción trofoblástica.",
+                image: "https://source.unsplash.com/400x300/?medical,pregnancy,low+hCG",
+                type: "patologia", chapter: "Capítulo 3 y 4", importance: "Alta",
+                keywords: ["hCG insuficiente", "embarazo no viable", "fallo cuerpo lúteo", "deficiencia hCG"]
+            },
+            {
+                id: 86, name: "Reacción inmunológica materna",
+                description: "En raras ocasiones, el sistema inmunológico materno puede reconocer al embrión (que es semi-alogénico) como extraño y montar una respuesta que dificulte la implantación o el mantenimiento del embarazo.",
+                image: "https://source.unsplash.com/400x300/?medical,immunology,pregnancy+rejection",
+                type: "patologia", chapter: "Capítulo 3", importance: "Media",
+                keywords: ["rechazo embrión", "sistema inmune materno", "tolerancia inmunológica"]
+            },
+            {
+                id: 87, name: "Defectos de trofoblasto",
+                description: "Fallas en la capacidad del trofoblasto para adherirse adecuadamente al endometrio, invadirlo y establecer una placenta funcional.",
+                image: "https://source.unsplash.com/400x300/?embryology,trophoblast+defect,placentation",
+                type: "patologia", chapter: "Capítulo 3", importance: "Alta",
+                keywords: ["falla adhesión trofoblasto", "invasión endometrial deficiente", "placentación anormal"]
+            },
+            {
+                id: 88, name: "Síndrome de Asherman",
+                description: "Presencia de adherencias o tejido cicatricial dentro de la cavidad uterina, usualmente como resultado de cirugías uterinas previas o infecciones. Puede dificultar o impedir la implantación.",
+                image: "https://source.unsplash.com/400x300/?medical,gynecology,Asherman+syndrome",
+                type: "patologia", chapter: "Capítulo 3", importance: "Media",
+                keywords: ["adherencias uterinas", "cicatriz endometrial", "falla implantación", "infertilidad"]
+            },
+            // Capítulo 4
+            {
+                id: 89, name: "Disco bilaminar",
+                description: "Estructura compuesta por epiblasto e hipoblasto que establece la base para la organización del embrión en la segunda semana.",
+                image: "https://source.unsplash.com/400x300/?embryology,bilaminar+disc,epiblast,hypoblast",
+                type: "estructura", chapter: "Capítulo 4", importance: "Crítica",
+                keywords: ["epiblasto", "hipoblasto", "segunda semana", "diferenciación embrionaria"]
+            },
+            {
+                id: 90, name: "Hipoblasto",
+                description: "Capa inferior del disco bilaminar que contribuye a membranas como el saco vitelino y apoya la formación del endodermo extraembrionario.",
+                image: "https://source.unsplash.com/400x300/?embryology,hypoblast,bilaminar+disc",
+                type: "estructura", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["disco bilaminar", "saco vitelino", "endodermo extraembrionario"]
+            },
+            {
+                id: 91, name: "Cavidad amniótica",
+                description: "Espacio lleno de líquido sobre el epiblasto que protege y aloja al embrión en desarrollo temprano.",
+                image: "https://source.unsplash.com/400x300/?embryology,amniotic+cavity,amnion",
+                type: "estructura", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["epiblasto", "amnioblastos", "protección embrión", "líquido amniótico"]
+            },
+            {
+                id: 92, name: "Amnioblastos",
+                description: "Células derivadas del epiblasto que rodean la cavidad amniótica y forman la membrana amniótica (amnios).",
+                image: "https://source.unsplash.com/400x300/?embryology,amnioblast,amniotic+membrane",
+                type: "estructura", chapter: "Capítulo 4", importance: "Media",
+                keywords: ["epiblasto", "cavidad amniótica", "amnios"]
+            },
+            {
+                id: 93, name: "Saco vitelino primario",
+                description: "Cavidad derivada del hipoblasto, delimitada por la membrana exocelómica (de Heuser), que provee nutrición inicial al embrión temprano.",
+                image: "https://source.unsplash.com/400x300/?embryology,primary+yolk+sac",
+                type: "estructura", chapter: "Capítulo 4", importance: "Media",
+                keywords: ["hipoblasto", "membrana exocelómica", "nutrición temprana"]
+            },
+            {
+                id: 94, name: "Membrana exocelómica (de Heuser)",
+                description: "Lámina delgada de células (probablemente derivadas del hipoblasto) que reviste la superficie interna del citotrofoblasto y delimita el saco vitelino primario (cavidad exocelómica).",
+                image: "https://source.unsplash.com/400x300/?embryology,exocoelomic+membrane,Heuser+membrane",
+                type: "estructura", chapter: "Capítulo 4", importance: "Media",
+                keywords: ["saco vitelino primario", "hipoblasto", "citotrofoblasto", "cavidad exocelómica"]
+            },
+            {
+                id: 95, name: "Mesodermo extraembrionario",
+                description: "Capa laxa de tejido conectivo que se forma entre la superficie interna del citotrofoblasto y la superficie externa de la cavidad amniótica y el saco vitelino primario. Permite la formación de vasos sanguíneos tempranos y el estroma del corion.",
+                image: "https://source.unsplash.com/400x300/?embryology,extraembryonic+mesoderm,chorion",
+                type: "estructura", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["citotrofoblasto", "saco vitelino", "corion", "vasos sanguíneos", "cavidad coriónica"]
+            },
+            {
+                id: 96, name: "Lacunas trofoblásticas",
+                description: "Espacios que aparecen dentro del sincitiotrofoblasto y se llenan de sangre materna, iniciando la circulación uteroplacentaria.",
+                image: "https://source.unsplash.com/400x300/?embryology,trophoblastic+lacunae,placenta+development",
+                type: "estructura", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["sincitiotrofoblasto", "sangre materna", "circulación uteroplacentaria"]
+            },
+            { 
+                id: 97, name: "Sincitiotrofoblasto",
+                description: "Capa externa multinucleada y altamente invasiva del trofoblasto, derivada del citotrofoblasto. Invade el endometrio, forma las lagunas trofoblásticas y produce hCG.",
+                image: "https://source.unsplash.com/400x300/?embryology,syncytiotrophoblast,implantation",
+                type: "estructura", chapter: "Capítulo 4", importance: "Crítica",
+                keywords: ["trofoblasto", "invasión endometrial", "hCG", "lagunas", "placenta"]
+            },
+            { 
+                id: 98, name: "Citotrofoblasto",
+                description: "Capa interna celular y proliferativa del trofoblasto. Sus células se dividen y fusionan para formar y renovar el sincitiotrofoblasto.",
+                image: "https://source.unsplash.com/400x300/?embryology,cytotrophoblast,trophoblast+cells",
+                type: "estructura", chapter: "Capítulo 4", importance: "Crítica",
+                keywords: ["trofoblasto", "sincitiotrofoblasto", "proliferación celular", "placenta"]
+            },
+            {
+                id: 99, name: "Cavidad coriónica",
+                description: "Gran espacio lleno de líquido que se forma dentro del mesodermo extraembrionario, rodeando el saco amniótico y el saco vitelino, excepto donde están unidos al corion por el pedículo de fijación. Permite la movilidad y el crecimiento del embrión.",
+                image: "https://source.unsplash.com/400x300/?embryology,chorionic+cavity,extraembryonic+coelom",
+                type: "estructura", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["mesodermo extraembrionario", "corion", "suspensión embrionaria", "celoma extraembrionario"]
+            },
+            {
+                id: 100, name: "Pedículo de fijación",
+                description: "Banda de mesodermo extraembrionario que conecta el disco embrionario (con sus cavidades amniótica y vitelina) al trofoblasto (corion). Se convertirá en el cordón umbilical.",
+                image: "https://source.unsplash.com/400x300/?embryology,connecting+stalk,umbilical+cord",
+                type: "estructura", chapter: "Capítulo 4", importance: "Crítica",
+                keywords: ["mesodermo extraembrionario", "corion", "cordón umbilical", "fijación embrión"]
+            },
+            { 
+                id: 101, name: "Saco vitelino secundario",
+                description: "Estructura más pequeña que reemplaza al saco vitelino primario. Se forma cuando células del hipoblasto migran y revisten la membrana exocelómica, mientras el saco primario se desprende. Nutre al embrión antes de que la placenta sea funcional.",
+                image: "https://source.unsplash.com/400x300/?embryology,secondary+yolk+sac",
+                type: "estructura", chapter: "Capítulo 4", importance: "Media",
+                keywords: ["hipoblasto", "nutrición embrionaria", "reemplaza saco primario"]
+            },
+            {
+                id: 102, name: "Células del hipoblasto",
+                description: "Células de la capa inferior del disco bilaminar que originan membranas y estructuras de soporte, como el saco vitelino y la membrana exocelómica (de Heuser). Forman el endodermo extraembrionario.",
+                image: "https://source.unsplash.com/400x300/?embryology,hypoblast+cells,endoderm",
+                type: "estructura", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["hipoblasto", "saco vitelino", "membrana exocelómica", "endodermo extraembrionario"]
+            },
+            { 
+                id: 103, name: "Saco vitelino terciario",
+                description: "También conocido como saco vitelino definitivo. Es la evolución final del saco vitelino secundario, más pequeño y conectado al intestino primitivo medio a través del conducto vitelino. Ayuda en la formación de vasos vitelinos y puede persistir como el divertículo de Meckel.",
+                image: "https://source.unsplash.com/400x300/?embryology,definitive+yolk+sac,gut+development",
+                type: "estructura", chapter: "Capítulo 4 (conectado a Sem 3)", importance: "Media",
+                keywords: ["intestino primitivo", "conducto vitelino", "vasos vitelinos", "divertículo de Meckel"]
+            },
+            {
+                id: 104, name: "Implantación anómala", 
+                description: "Ubicación incorrecta del blastocisto durante la implantación, como en la parte inferior del útero (llevando a placenta previa) o fuera del útero (embarazo ectópico).",
+                image: "https://source.unsplash.com/400x300/?medical,pregnancy,abnormal+implantation",
+                type: "patologia", chapter: "Capítulo 4", importance: "Crítica",
+                keywords: ["blastocisto", "placenta previa", "embarazo ectópico", "sitio incorrecto"]
+            },
+            {
+                id: 105, name: "Placenta previa", 
+                description: "Implantación del blastocisto en la parte inferior del útero, de modo que la placenta cubre parcial o totalmente el orificio cervical interno.",
+                image: "https://source.unsplash.com/400x300/?medical,pregnancy,placenta+previa",
+                type: "patologia", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["implantación baja", "cérvix", "sangrado obstétrico"]
+            },
+            {
+                id: 106, name: "Amnios displásico", 
+                description: "Malformaciones en la formación o estructura de la cavidad amniótica o la membrana amniótica.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,amniotic+sac+abnormality",
+                type: "patologia", chapter: "Capítulo 4", importance: "Media",
+                keywords: ["cavidad amniótica", "membrana amniótica", "malformación"]
+            },
+            {
+                id: 107, name: "Hipoplasia del saco vitelino", 
+                description: "Desarrollo reducido o insuficiente del saco vitelino, lo que puede comprometer el soporte temprano del embrión.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,yolk+sac+hypoplasia",
+                type: "patologia", chapter: "Capítulo 4", importance: "Media",
+                keywords: ["saco vitelino reducido", "soporte embrionario deficiente"]
+            },
+            {
+                id: 108, name: "Alteración del mesodermo extraembrionario", 
+                description: "Malformaciones en el desarrollo del mesodermo extraembrionario, lo que puede afectar la formación del corion, la cavidad coriónica y los vasos sanguíneos tempranos.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,mesoderm+abnormality",
+                type: "patologia", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["mesodermo extraembrionario", "corion", "cavidad coriónica", "malformación vascular"]
+            },
+            {
+                id: 109, name: "Ausencia de cavidad coriónica", 
+                description: "Falla en la formación o segmentación del mesodermo extraembrionario que impide la creación de la cavidad coriónica.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,chorionic+cavity+absence",
+                type: "patologia", chapter: "Capítulo 4", importance: "Alta",
+                keywords: ["cavidad coriónica ausente", "mesodermo extraembrionario", "falla desarrollo"]
+            },
+            {
+                id: 110, name: "Adherencias anormales del sincitio", 
+                description: "Invasión excesiva del sincitiotrofoblasto en la pared uterina, más allá del endometrio, pudiendo llegar al miometrio (placenta accreta) o incluso atravesarlo (placenta percreta).",
+                image: "https://source.unsplash.com/400x300/?medical,pregnancy,placenta+accreta",
+                type: "patologia", chapter: "Capítulo 4", importance: "Crítica",
+                keywords: ["sincitiotrofoblasto", "placenta accreta", "placenta percreta", "invasión uterina"]
+            },
+            
+            // Capítulo 5: Tercera semana del desarrollo (Nuevos perfiles IDs 111-138)
+            // Estría Primitiva (ID 33) se actualiza en KB, no se crea nuevo perfil. Línea Primitiva es alias.
+            {
+                id: 111, name: "Nodo primitivo",
+                description: "Estructura en el extremo cefálico de la estría primitiva. Controla la migración y diferenciación celular. Dirige el desarrollo axial.",
+                image: "https://source.unsplash.com/400x300/?embryology,primitive+node,gastrulation",
+                type: "estructura", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["estría primitiva", "notocorda", "desarrollo axial", "gastrulación", "inducción"]
+            },
+            {
+                id: 112, name: "Fosa primitiva",
+                description: "Depresión en el nodo primitivo. Sitio de ingreso celular hacia el mesodermo axial e inicio del canal notocordal.",
+                image: "https://source.unsplash.com/400x300/?embryology,primitive+pit,notochord+development",
+                type: "estructura", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["nodo primitivo", "canal notocordal", "invaginación celular", "mesodermo axial"]
+            },
+            {
+                id: 113, name: "Canal notocordal",
+                description: "Conducto temporal formado por células invaginadas desde la fosa primitiva. Se convertirá en notocorda definitiva y dirige la inducción del tubo neural.",
+                image: "https://source.unsplash.com/400x300/?embryology,notochordal+canal,notogenesis",
+                type: "estructura", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["fosa primitiva", "notocorda", "tubo neural", "inducción"]
+            },
+            {
+                id: 114, name: "Notocorda",
+                description: "Cilindro mesodérmico axial. Induce la formación del tubo neural y es el eje estructural embrionario.",
+                image: "https://source.unsplash.com/400x300/?embryology,notochord,axial+skeleton",
+                type: "estructura", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["eje axial", "inducción neural", "ectodermo", "somitas", "mesodermo"]
+            },
+            {
+                id: 115, name: "Endodermo embrionario",
+                description: "Capa germinal interna derivada del epiblasto durante la gastrulación. Formará el tubo digestivo y glándulas asociadas.",
+                image: "https://source.unsplash.com/400x300/?embryology,endoderm,germ+layer,digestive+system",
+                type: "estructura", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["gastrulación", "epiblasto", "tubo digestivo", "revestimiento órganos", "capa germinal"]
+            },
+            {
+                id: 116, name: "Mesodermo embrionario",
+                description: "Capa germinal media, situada entre ectodermo y endodermo, originada del epiblasto. Formará músculo, hueso, sangre y más.",
+                image: "https://source.unsplash.com/400x300/?embryology,mesoderm,germ+layer,muscle,bone",
+                type: "estructura", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["gastrulación", "epiblasto", "somitas", "músculo", "hueso", "sangre", "capa germinal"]
+            },
+            {
+                id: 117, name: "Ectodermo embrionario",
+                description: "Capa germinal superior derivada del epiblasto tras la gastrulación. Formará la piel, el sistema nervioso y órganos sensoriales.",
+                image: "https://source.unsplash.com/400x300/?embryology,ectoderm,germ+layer,nervous+system,skin",
+                type: "estructura", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["gastrulación", "epiblasto", "piel", "sistema nervioso", "SNC", "capa germinal"]
+            },
+            {
+                id: 118, name: "Placa precordal",
+                description: "Grupo de células mesodérmicas situadas entre el extremo cefálico de la notocorda y la membrana bucofaríngea. Induce al encéfalo y guía el desarrollo cefálico.",
+                image: "https://source.unsplash.com/400x300/?embryology,prechordal+plate,brain+development,head+organizer",
+                type: "estructura", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["notocorda", "membrana bucofaríngea", "inducción encéfalo", "desarrollo cefálico", "organizador"]
+            },
+            {
+                id: 119, name: "Membrana bucofaríngea",
+                description: "Área bilaminar (ectodermo y endodermo fusionados, sin mesodermo interpuesto) en la región cefálica, que marca el sitio futuro de la boca. Delimita la región cefálica anterior.",
+                image: "https://source.unsplash.com/400x300/?embryology,oropharyngeal+membrane,buccopharyngeal",
+                type: "estructura", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["ectodermo", "endodermo", "futura boca", "estomodeo", "región cefálica"]
+            },
+            {
+                id: 120, name: "Membrana cloacal",
+                description: "Área bilaminar (ectodermo y endodermo fusionados, sin mesodermo) en la región caudal del embrión. Marca el sitio futuro del ano y es un cierre temporal de la región anal.",
+                image: "https://source.unsplash.com/400x300/?embryology,cloacal+membrane,anus",
+                type: "estructura", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["ectodermo", "endodermo", "futuro ano", "región caudal", "intestino posterior"]
+            },
+            {
+                id: 121, name: "Alantoides",
+                description: "Pequeña evaginación del endodermo del saco vitelino que se extiende hacia el pedículo de fijación. Participa en la formación del cordón umbilical, vasos umbilicales y la vejiga urinaria (uraco).",
+                image: "https://source.unsplash.com/400x300/?embryology,allantois,umbilical+vessels",
+                type: "estructura", chapter: "Capítulo 5", importance: "Media",
+                keywords: ["saco vitelino", "pedículo de fijación", "cordón umbilical", "vejiga", "uraco", "vasos umbilicales"]
+            },
+            {
+                id: 122, name: "Mesodermo paraxial",
+                description: "Región del mesodermo embrionario que se organiza en columnas longitudinales a cada lado de la notocorda. Se segmenta para formar los somitas, que originan vértebras y músculos.",
+                image: "https://source.unsplash.com/400x300/?embryology,paraxial+mesoderm,somite+formation",
+                type: "estructura", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["mesodermo", "notocorda", "somitas", "esqueleto axial", "músculos", "segmentación"]
+            },
+            {
+                id: 123, name: "Mesodermo intermedio",
+                description: "Región del mesodermo embrionario situada entre el mesodermo paraxial y el mesodermo lateral. Forma estructuras del sistema urogenital, participando en riñones y gónadas.",
+                image: "https://source.unsplash.com/400x300/?embryology,intermediate+mesoderm,urogenital",
+                type: "estructura", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["mesodermo", "sistema urogenital", "riñones", "gónadas", "nefrótomos"]
+            },
+            {
+                id: 124, name: "Mesodermo lateral",
+                description: "Región más externa del mesodermo embrionario que se divide en dos hojas: la somatopleura (parietal) y la esplacnopleura (visceral), delimitando el celoma intraembrionario (futuras cavidades corporales).",
+                image: "https://source.unsplash.com/400x300/?embryology,lateral+plate+mesoderm,body+cavities",
+                type: "estructura", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["mesodermo", "cavidades corporales", "somatopleura", "esplacnopleura", "serosas", "celoma"]
+            },
+            {
+                id: 125, name: "Somatopleura",
+                description: "Capa formada por la asociación del mesodermo lateral parietal y el ectodermo suprayacente. Forma la dermis de la pared corporal, huesos de las extremidades y revestimiento parietal de las cavidades corporales.",
+                image: "https://source.unsplash.com/400x300/?embryology,somatopleure,body+wall+formation",
+                type: "estructura", chapter: "Capítulo 5", importance: "Media",
+                keywords: ["mesodermo lateral", "ectodermo", "pared corporal", "dermis", "extremidades", "revestimiento parietal"]
+            },
+            {
+                id: 126, name: "Esplacnopleura", 
+                description: "Capa formada por la asociación del mesodermo lateral visceral y el endodermo subyacente. Forma la musculatura lisa y el tejido conectivo del tubo digestivo, así como el revestimiento visceral de las cavidades corporales y los mesenterios.",
+                image: "https://source.unsplash.com/400x300/?embryology,splanchnopleure,visceral+mesoderm,gut+muscle",
+                type: "estructura", chapter: "Capítulo 5", importance: "Media",
+                keywords: ["mesodermo lateral", "endodermo", "tubo digestivo", "músculo liso", "mesenterios", "revestimiento visceral"]
+            },
+            {
+                id: 127, name: "Somitas",
+                description: "Bloques segmentados de mesodermo paraxial que se forman a ambos lados del tubo neural. Dan origen a vértebras, costillas, músculos axiales y dermis dorsal.",
+                image: "https://source.unsplash.com/400x300/?embryology,somites,segmentation,vertebrae",
+                type: "estructura", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["mesodermo paraxial", "segmentación", "vértebras", "músculos", "dermis", "esclerotoma", "miotoma", "dermatoma"]
+            },
+            {
+                id: 128, name: "Canal neurentérico",
+                description: "Comunicación temporal y transitoria que se establece entre la cavidad amniótica y el saco vitelino a través de la fosa primitiva y el proceso notocordal. Permite el paso de líquido.",
+                image: "https://source.unsplash.com/400x300/?embryology,neurenteric+canal,notochordal+process",
+                type: "estructura", chapter: "Capítulo 5", importance: "Baja",
+                keywords: ["cavidad amniótica", "saco vitelino", "fosa primitiva", "notocorda", "comunicación temporal"]
+            },
+            // Patologías Capítulo 5
+            {
+                id: 129, name: "Teratomas sacrococcígeos", 
+                description: "Tumores que se originan de remanentes de la estría primitiva en la región sacrococcígea. Pueden contener tejidos de las tres capas germinativas.",
+                image: "https://source.unsplash.com/400x300/?medical,sacrococcygeal+teratoma,newborn+tumor",
+                type: "patologia", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["teratoma", "estría primitiva", "región sacrococcígea", "tumor congénito", "células pluripotentes"]
+            },
+            {
+                id: 130, name: "Gastrulación incompleta",
+                description: "Falla en la correcta formación o migración de las células a través de la estría primitiva, resultando en una deficiente formación de una o más capas germinativas (endodermo, mesodermo, ectodermo).",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,incomplete+gastrulation,birth+defect",
+                type: "patologia", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["gastrulación", "capas germinativas", "migración celular", "malformaciones severas", "estría primitiva"]
+            },
+            {
+                id: 131, name: "Defectos de notocorda",
+                description: "Anomalías en la formación, estructura o función de la notocorda. Pueden llevar a malformaciones del eje axial (columna vertebral) y defectos en la inducción del sistema nervioso central.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,notochord+defect,spina+bifida",
+                type: "patologia", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["notocorda", "eje axial", "columna vertebral", "inducción neural", "tubo neural"]
+            },
+            {
+                id: 132, name: "Situs inversus",
+                description: "Condición en la que los órganos internos torácicos y abdominales están en una disposición en espejo de la normal (ej. corazón a la derecha, hígado a la izquierda). Se relaciona con alteraciones en la función de los cilios del nodo primitivo.",
+                image: "https://source.unsplash.com/400x300/?medical,anatomy,situs+inversus,organ+transposition",
+                type: "patologia", chapter: "Capítulo 5", importance: "Media",
+                keywords: ["lateralidad corporal", "órganos invertidos", "nodo primitivo", "cilios", "genética"]
+            },
+            {
+                id: 133, name: "Agenesia de somitas",
+                description: "Ausencia de formación de uno o más somitas, lo que resulta en la falta de desarrollo de las estructuras derivadas de ellos, como vértebras, costillas o músculos segmentarios.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,somite+agenesis,vertebral+defect",
+                type: "patologia", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["somitas", "formación vertebral", "ausencia estructuras", "desarrollo axial", "mesodermo paraxial"]
+            },
+            {
+                id: 134, name: "Defectos del mesodermo lateral",
+                description: "Malformaciones en el desarrollo del mesodermo lateral, que pueden afectar la formación de las cavidades corporales (celoma), el corazón, el sistema cardiovascular, las extremidades y las serosas (pleura, pericardio, peritoneo).",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,lateral+mesoderm+defect,heart+defect",
+                type: "patologia", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["mesodermo lateral", "cavidades corporales", "corazón", "malformaciones cardiovasculares", "extremidades"]
+            },
+            {
+                id: 135, name: "Anomalías cloacales",
+                description: "Defectos en la partición o desarrollo de la cloaca (estructura común para los sistemas digestivo, urinario y genital en etapas tempranas), o persistencia de la membrana cloacal. Puede resultar en malformaciones anorrectales y urogenitales complejas.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,cloacal+malformation,urogenital+defect",
+                type: "patologia", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["cloaca", "membrana cloacal", "malformaciones anorrectales", "malformaciones urogenitales", "septo urorrectal"]
+            },
+            {
+                id: 136, name: "Fístula alantoidea (uracal)",
+                description: "Persistencia del uraco, un conducto que conecta la vejiga fetal con el ombligo a través del alantoides. Si permanece permeable después del nacimiento, puede causar una fístula uracal (drenaje de orina por el ombligo), quiste uracal o seno uracal.",
+                image: "https://source.unsplash.com/400x300/?medical,pediatrics,urachal+fistula,umbilicus",
+                type: "patologia", chapter: "Capítulo 5", importance: "Media",
+                keywords: ["alantoides", "uraco", "vejiga", "ombligo", "fístula", "quiste uracal"]
+            },
+            {
+                id: 137, name: "Duplicación del nodo primitivo",
+                description: "Presencia de dos nodos primitivos, lo que puede llevar a la formación de dos ejes embrionarios y, en consecuencia, a la duplicación de estructuras axiales o incluso a gemelos siameses.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,conjoined+twins,primitive+node+duplication",
+                type: "patologia", chapter: "Capítulo 5", importance: "Crítica",
+                keywords: ["nodo primitivo duplicado", "eje embrionario", "gemelos siameses", "duplicación estructuras", "gastrulación anómala"]
+            },
+            {
+                id: 138, name: "Mesodermo paraxial hipoplásico",
+                description: "Desarrollo reducido o insuficiente del mesodermo paraxial, lo que resulta en una formación deficiente de somitas y, por lo tanto, en anomalías del esqueleto axial (vértebras, costillas) y de la musculatura asociada.",
+                image: "https://source.unsplash.com/400x300/?medical,embryology,paraxial+mesoderm+hypoplasia,skeletal+abnormality",
+                type: "patologia", chapter: "Capítulo 5", importance: "Alta",
+                keywords: ["mesodermo paraxial", "hipoplasia", "somitas deficientes", "desarrollo óseo-muscular reducido", "esqueleto axial"]
+            }
+        ];
+
+        let currentCardIndex = 0;
+        let matches = [];
+        let currentChatProfile = null;
+        let chatMessages = {}; 
+        let isDragging = false;
+        let isTyping = false; 
+
+        const cardsContainer = document.getElementById('cards-container');
+        const emptySwipeState = cardsContainer.querySelector('.empty-state');
+        const aiTypingIndicatorTemplate = document.getElementById('ai-typing-indicator-template');
+
+
+        function init() {
+            loadCards();
+            setupEventListeners();
+            loadMatches(); 
+            updateActionButtonsState();
+        }
+
+        function setupEventListeners() {
+            const messageInput = document.getElementById('message-input');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { 
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
+            profiles.forEach(profile => {
+                const img = new Image();
+                img.src = profile.image; 
+            });
+        }
+
+        function updateActionButtonsState() {
+            const actionButtons = document.querySelector('.action-buttons');
+            if (currentCardIndex >= profiles.length) {
+                if(actionButtons) actionButtons.style.display = 'none';
+            } else {
+                if(actionButtons) actionButtons.style.display = 'flex';
+            }
+        }
+
+        function loadCards() {
+            Array.from(cardsContainer.querySelectorAll('.card')).forEach(card => card.remove());
+
+            if (currentCardIndex >= profiles.length) {
+                if(emptySwipeState) emptySwipeState.style.display = 'flex'; 
+                updateActionButtonsState();
+                return;
+            }
+            if(emptySwipeState) emptySwipeState.style.display = 'none'; 
+
+
+            const cardsToShow = Math.min(3, profiles.length - currentCardIndex);
+            for (let i = cardsToShow - 1; i >= 0; i--) {
+                if (currentCardIndex + i < profiles.length) {
+                    const profile = profiles[currentCardIndex + i];
+                    const card = createCard(profile, i);
+                    cardsContainer.appendChild(card);
+                }
+            }
+            updateActionButtonsState();
+        }
+        
+        function createCard(profile, stackIndex) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            cardElement.style.zIndex = profiles.length - currentCardIndex - stackIndex; 
+            cardElement.style.transform = `scale(${1 - stackIndex * 0.04}) translateY(${stackIndex * -8}px)`;
+            cardElement.style.opacity = stackIndex === 0 ? 1 : (1 - (stackIndex * 0.3));
+            
+            // Mostrar solo la primera oración de la descripción en la tarjeta
+            const firstSentence = profile.description.split('.')[0] + '.';
+
+            cardElement.innerHTML = `
+                <img src="${profile.image}" alt="Imagen de ${profile.name}" onerror="this.src='https://via.placeholder.com/400x300/e0e0e0/999999?text=Imagen+no+disponible'; this.alt='Imagen no disponible para ${profile.name}';">
+                <div class="card-info">
+                    <h3>
+                        ${profile.name}
+                        <span class="profile-badge badge-${profile.type === 'proceso' ? 'proceso' : profile.type}">
+                            ${profile.type}
+                        </span>
+                    </h3>
+                    <p>${firstSentence}</p>
+                    <div class="card-stats">
+                        <span>📚 ${profile.chapter}</span>
+                        <span>⭐ ${profile.importance}</span>
+                    </div>
+                </div>
+            `;
+            
+            if (stackIndex === 0) { 
+                addSwipeListeners(cardElement);
+            }
+            
+            return cardElement;
+        }
+
+        function addSwipeListeners(cardElement) {
+            let startX, startY, currentX, currentY, isPointerDown = false;
+
+            function pointerDown(e) {
+                isPointerDown = true;
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+                currentX = 0; 
+                currentY = 0; 
+                cardElement.classList.add('dragging');
+                if (e.type === 'touchstart' && e.currentTarget === cardElement) { 
+                    document.addEventListener('touchmove', pointerMove, { passive: false });
+                    document.addEventListener('touchend', pointerUp);
+                } else if (e.type === 'mousedown') {
+                    document.addEventListener('mousemove', pointerMove);
+                    document.addEventListener('mouseup', pointerUp);
+                }
+            }
+
+            function pointerMove(e) {
+                if (!isPointerDown) return;
+                if (e.type === 'touchmove') e.preventDefault(); 
+
+                currentX = (e.type.includes('mouse') ? e.clientX : e.touches[0].clientX) - startX;
+                currentY = (e.type.includes('mouse') ? e.clientY : e.touches[0].clientY) - startY;
+                
+                const rotation = currentX * 0.05; 
+                cardElement.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rotation}deg)`;
+            }
+
+            function pointerUp(e) { 
+                if (!isPointerDown) return;
+                isPointerDown = false;
+                cardElement.classList.remove('dragging');
+
+                if (e.type === 'touchend') {
+                    document.removeEventListener('touchmove', pointerMove);
+                    document.removeEventListener('touchend', pointerUp);
+                } else if (e.type === 'mouseup') {
+                    document.removeEventListener('mousemove', pointerMove);
+                    document.removeEventListener('mouseup', pointerUp);
+                }
+
+                const decisionThresholdX = cardElement.offsetWidth * 0.3; 
+                const decisionThresholdY = cardElement.offsetHeight * 0.2; 
+
+                if (Math.abs(currentX) > decisionThresholdX || Math.abs(currentY) > decisionThresholdY) {
+                     if (currentY < -decisionThresholdY && Math.abs(currentX) < decisionThresholdX * 1.5) { 
+                        handleSwipeAction(cardElement, 'super-like-animation', superLikeCard);
+                    } else if (currentX > decisionThresholdX) { 
+                        handleSwipeAction(cardElement, 'swipe-right', likeCard);
+                    } else if (currentX < -decisionThresholdX) { 
+                        handleSwipeAction(cardElement, 'swipe-left', rejectCard);
+                    } else {
+                         resetCardPosition(cardElement); 
+                    }
+                } else {
+                    resetCardPosition(cardElement);
+                }
+            }
+            
+            cardElement.addEventListener('mousedown', pointerDown);
+            cardElement.addEventListener('touchstart', pointerDown, { passive: false });
+        }
+
+        function resetCardPosition(cardElement) {
+            cardElement.style.transition = 'transform 0.3s ease-out';
+            cardElement.style.transform = `scale(1) translateY(0px)`; 
+            setTimeout(() => {
+                 cardElement.style.transition = ''; 
+            }, 300);
+        }
+
+        function handleSwipeAction(cardElement, animationClass, actionCallback) {
+            if (!cardElement) return; 
+            cardElement.style.transition = 'none'; 
+            cardElement.classList.add(animationClass);
+            
+            setTimeout(() => {
+                actionCallback(); 
+                if(cardElement.parentNode) cardElement.remove(); 
+                currentCardIndex++;
+                loadCards(); 
+            }, 500); 
+        }
+        
+        function rejectCardManual() {
+            const cardElement = cardsContainer.querySelector('.card:last-of-type'); 
+            if (cardElement && !isDragging) handleSwipeAction(cardElement, 'swipe-left', rejectCard);
+        }
+        function likeCardManual() {
+            const cardElement = cardsContainer.querySelector('.card:last-of-type');
+            if (cardElement && !isDragging) handleSwipeAction(cardElement, 'swipe-right', likeCard);
+        }
+        function superLikeCardManual() {
+            const cardElement = cardsContainer.querySelector('.card:last-of-type');
+            if (cardElement && !isDragging) handleSwipeAction(cardElement, 'super-like-animation', superLikeCard);
+        }
+
+        function rejectCard() {
+            // console.log("Rejected profile ID:", profiles[currentCardIndex]?.id, profiles[currentCardIndex]?.name);
+        }
+
+        function likeCard() {
+            const profile = profiles[currentCardIndex];
+            if (profile && Math.random() > 0.3) { 
+                createMatch(profile);
+                showMatchPopup(profile.name);
+            }
+            // console.log("Liked profile ID:", profile?.id, profile?.name);
+        }
+
+        function superLikeCard() {
+            const profile = profiles[currentCardIndex];
+            if (profile) {
+                createMatch(profile);
+                showMatchPopup(profile.name, true);
+            }
+            // console.log("SuperLiked profile ID:", profile?.id, profile?.name);
+        }
+        
+        function showMatchPopup(profileName, isSuperLike = false) {
+            const popup = document.getElementById('match-popup');
+            const messageElement = document.getElementById('match-message');
+            if (isSuperLike) {
+                messageElement.textContent = `¡Es un Super Match con ${profileName}! ✨ Ahora pueden chatear.`;
+                popup.querySelector('h2').textContent = '¡Super Match! 🌟';
+            } else {
+                messageElement.textContent = `¡Hiciste Match con ${profileName}! Ahora pueden chatear.`;
+                popup.querySelector('h2').textContent = '¡Es un Match! 🎉';
+            }
+            popup.style.display = 'flex';
+        }
+
+        function createMatch(profile) {
+            if (!matches.find(m => m.id === profile.id)) {
+                matches.push({ ...profile, matchedAt: new Date() });
+                loadMatches(); 
+            }
+        }
+
+        function loadMatches() {
+            const container = document.getElementById('matches-grid');
+            const emptyStateMatches = container.querySelector('.empty-state');
+
+            if (matches.length === 0) {
+                if (emptyStateMatches) emptyStateMatches.style.display = 'flex';
+                Array.from(container.querySelectorAll('.match-card')).forEach(card => card.remove());
+                return;
+            }
+            
+            if(emptyStateMatches) emptyStateMatches.style.display = 'none';
+            container.innerHTML = ''; 
+            matches.sort((a,b) => b.matchedAt - a.matchedAt);
+
+            matches.forEach(match => {
+                const card = document.createElement('div');
+                card.className = 'match-card';
+                card.onclick = () => openChat(match);
+                card.innerHTML = `
+                    <img src="${match.image}" alt="Imagen de ${match.name}" onerror="this.src='https://via.placeholder.com/150x100/e0e0e0/999999?text=Error'; this.alt='Imagen no disponible para ${match.name}';">
+                    <div class="match-info">
+                        <h4>${match.name}</h4>
+                        <p>${match.type} - ${match.chapter}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openChat(profile) {
+            currentChatProfile = profile;
+            switchTab('chat', document.querySelector('.nav-tabs button:nth-child(3)')); 
+            
+            const chatHeader = document.getElementById('chat-header');
+            const chatInput = document.getElementById('chat-input');
+            const chatAvatar = document.getElementById('chat-avatar');
+            const chatName = document.getElementById('chat-name');
+            
+            if(chatHeader) chatHeader.style.display = 'flex';
+            if(chatInput) chatInput.style.display = 'flex';
+            if(chatAvatar) {
+                chatAvatar.src = profile.image;
+                chatAvatar.onerror = function() { this.src='https://via.placeholder.com/40/e0e0e0/999999?text=N/A'; this.alt='Avatar no disponible';};
+            }
+            if(chatName) chatName.textContent = profile.name;
+            
+            const chatMessagesContainer = document.getElementById('chat-messages');
+            const emptyChatState = chatMessagesContainer.querySelector('.empty-state');
+            if(emptyChatState) emptyChatState.style.display = 'none';
+
+
+            if (!chatMessages[profile.id]) {
+                 const firstSentenceDesc = profile.description.split('.')[0] + '.';
+                chatMessages[profile.id] = [{
+                    sender: 'ai',
+                    text: `¡Hola! Soy ${profile.name}. ${firstSentenceDesc} ¿Qué te gustaría saber sobre mí, por ejemplo, mi función, estructura, importancia, semana de aparición o mi relación con otros elementos del ${profile.chapter}?`
+                }];
+            }
+            loadChatMessages();
+        }
+
+        function loadChatMessages() {
+            const container = document.getElementById('chat-messages');
+            if (!currentChatProfile) {
+                if (!container.querySelector('.empty-state')) {
+                    container.innerHTML = '<div class="empty-state"><h3>Selecciona un match</h3><p>Elige un match para empezar a chatear</p></div>';
+                } else {
+                    const es = container.querySelector('.empty-state');
+                    if(es) es.style.display = 'flex';
+                }
+                const chatHeader = document.getElementById('chat-header');
+                const chatInput = document.getElementById('chat-input');
+                if(chatHeader) chatHeader.style.display = 'none';
+                if(chatInput) chatInput.style.display = 'none';
+                return;
+            }
+            
+            const emptyChatState = container.querySelector('.empty-state');
+            if (emptyChatState) emptyChatState.style.display = 'none';
+
+            container.innerHTML = ''; 
+            const messages = chatMessages[currentChatProfile.id] || [];
+            
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `message ${msg.sender}`;
+                div.textContent = msg.text;
+                container.appendChild(div);
+            });
+            
+            if (isTyping) {
+                const indicator = aiTypingIndicatorTemplate.cloneNode(true);
+                indicator.id = ''; 
+                indicator.style.display = 'flex';
+                container.appendChild(indicator);
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function generateAIResponse(userMessage, profile) {
+            const message = userMessage.toLowerCase();
+            const knowledgeBase = {
+                // CAPÍTULO 1
+                cromatina: {
+                    definición: "Soy la estructura fundamental del núcleo celular, compuesta por ADN enrollado alrededor de proteínas histonas. Mi principal función es empaquetar el largo ADN de forma organizada dentro del núcleo y regular la expresión génica. ",
+                    función_principal: "Organizo y regulo el acceso al ADN. Controlo qué genes se expresan empaquetando el ADN de forma dinámica. Puedo estar en forma laxa (Eucromatina, activa para transcripción) o compacta (Heterocromatina, inactiva). ",
+                    estructura: "Estoy formada por ADN enrollado alrededor de octámeros de proteínas histonas (H2A, H2B, H3, H4), formando Nucleosomas, que son como 'cuentas en un collar'. La histona H1 ayuda a compactar más este collar.",
+                    importancia: "Sin mí, el ADN de ~2 metros no cabría en un núcleo de ~10 micrómetros. Soy crucial para la división celular (formando cromosomas visibles) y para la regulación epigenética del desarrollo.",
+                    relacion_funcional: "Los Nucleosomas son mi unidad básica. La Metilación del ADN y las modificaciones de histonas afectan mi estructura y función, determinando si soy Eucromatina o Heterocromatina. Los Factores de transcripción interactúan conmigo para acceder a los Promotores génicos.",
+                    patología: "Alteraciones en mi estructura o en las proteínas asociadas pueden causar diversos trastornos del desarrollo y cáncer. Por ejemplo, mutaciones en genes que modifican histonas o leen la Metilación del ADN (como en el Síndrome de Rett )."
+                },
+                nucleosoma: {
+                    definición: "Soy la unidad estructural básica de la Cromatina en las células eucariotas. Consisto en un segmento de ADN enrollado alrededor de un núcleo de ocho proteínas histonas (octámero). Permito compactar el ADN y controlar su acceso. ",
+                    función_principal: "Soy el primer nivel de compactación del ADN, permitiendo que el genoma quepa en el núcleo. También juego un papel clave en la regulación de la expresión génica, ya que mi posición y las modificaciones de mis histonas pueden afectar el acceso de los Factores de transcripción y la ARN polimerasa al ADN.",
+                    estructura: "Mi núcleo está formado por dos copias de cada una de las cuatro histonas principales: H2A, H2B, H3 y H4. Alrededor de este octámero se enrollan aproximadamente 147 pares de bases de ADN, dando casi dos vueltas. Un segmento de ADN espaciador (linker DNA) me conecta con el siguiente nucleosoma, y la histona H1 se asocia a este ADN espaciador para mayor compactación.",
+                    importancia: "Soy fundamental para organizar el genoma y para la regulación epigenética.",
+                    relacion_funcional: "Soy la unidad repetitiva de la Cromatina. "
+                },
+                eucromatina: {
+                    definición: "Soy una forma de Cromatina menos condensada y genéticamente activa. Me encuentro dispersa en el nucleoplasma y permito la transcripción activa. ",
+                    función_principal: "Permito la transcripción de los genes que contengo, ya que mi estructura laxa hace que el ADN sea accesible a la maquinaria de transcripción, incluyendo la ARN polimerasa y los Factores de transcripción.",
+                    estructura: "Me caracterizo por tener Nucleosomas más espaciados y por modificaciones específicas en las histonas, como la acetilación de lisinas y la metilación de lisina 4 en la histona H3 (H3K4me3), que promueven una estructura abierta.",
+                    importancia: "Soy esencial para la expresión de genes necesarios para las funciones celulares y la diferenciación durante el desarrollo.",
+                    relacion_funcional: "Soy un estado de la Cromatina, opuesto a la Heterocromatina. La Metilación del ADN suele ser baja en mis regiones. Interactúo activamente con Factores de transcripción  y Potenciadores."
+                },
+                heterocromatina: {
+                    definición: "Soy una forma de Cromatina altamente condensada y genéticamente inactiva o reprimida que impide la transcripción.  A menudo me localizo en la periferia del núcleo y alrededor del nucléolo.",
+                    función_principal: "Mi principal función es mantener genes en estado silenciado y proteger la integridad de regiones cromosómicas estructuralmente importantes como los centrómeros y telómeros. También participo en la organización nuclear.",
+                    estructura: "Me caracterizo por una densa compactación de Nucleosomas. Mis histonas suelen tener modificaciones represivas, como la metilación de lisina 9 (H3K9me3) y lisina 27 (H3K27me3) en la histona H3, y mi ADN suele estar altamente metilado (ver Metilación del ADN).",
+                    tipos: "Existo en dos formas principales: constitutiva (permanentemente condensada y con secuencias repetitivas) y facultativa (puede cambiar su estado de condensación según el tipo celular o el desarrollo, silenciando genes específicos de tejido).",
+                    importancia: "Soy crucial para la estabilidad genómica, el silenciamiento de elementos transponibles y la correcta regulación de la expresión génica durante el desarrollo y la diferenciación celular.",
+                    relacion_funcional: "Soy un estado de la Cromatina, opuesto a la Eucromatina. La Metilación del ADN y proteínas específicas lectoras de estas marcas contribuyen a mi formación y mantenimiento."
+                },
+                promotor: {
+                    definición: "Soy una región específica del ADN localizada al inicio de un gen, donde se une la ARN polimerasa y los Factores de transcripción generales para iniciar la transcripción de ese gen. ",
+                    función_principal: "Mi función es dirigir el inicio de la transcripción. Controlo cuándo y con qué frecuencia se transcribe un gen. Actúo como un interruptor molecular.",
+                    estructura: "Contengo secuencias consenso importantes, como la Caja TATA  en muchos genes eucariotas, así como otros elementos reguladores proximales donde se unen Factores de transcripción específicos.",
+                    importancia: "Soy esencial para la expresión génica. Mutaciones en mi secuencia pueden alterar drásticamente la expresión de un gen, llevando a enfermedades como el cáncer. ",
+                    relacion_funcional: "La ARN polimerasa se une a mí, ayudada por Factores de transcripción. Mi actividad puede ser modulada por Potenciadores y Silenciadores."
+                },
+                "caja tata": {
+                    definición: "Soy una secuencia de ADN consenso (típicamente TATAAA) que se encuentra en la región promotora de muchos genes eucariotas, donde se une la ARN polimerasa con ayuda de factores de transcripción. ",
+                    función_principal: "Juego un papel crucial en el ensamblaje del complejo de preiniciación de la transcripción. Soy el sitio de unión para el factor de transcripción general TBP (TATA-binding protein), que es una subunidad de TFIID. Esta unión ayuda a posicionar correctamente la ARN polimerasa II en el Promotor.",
+                    importancia: "Soy un elemento central para la iniciación precisa de la transcripción en una gran cantidad de genes.",
+                    relacion_funcional: "Soy una parte clave del Promotor de muchos genes. Interactúo directamente con Factores de transcripción (específicamente TBP/TFIID) para ayudar a la ARN polimerasa a iniciar la transcripción genética. "
+                },
+                "factores de transcripción": {
+                    definición: "Somos proteínas que nos unimos a secuencias específicas de ADN para regular la expresión genética activando o inhibiendo genes. ",
+                    función_principal: "Controlamos qué genes se activan o reprimen en una célula en un momento dado. Somos esenciales para la diferenciación celular, el desarrollo embrionario, la respuesta a señales ambientales y la homeostasis.",
+                    tipos: "Nos dividimos en factores generales (requeridos para la iniciación basal, ej. TFIID) y específicos (que modulan finamente la expresión, ej. Oct4, MyoD).",
+                    relacion_funcional: "Nos unimos a Promotores y Potenciadores para activar genes específicos.  La Eucromatina facilita nuestro acceso. "
+                },
+                potenciadores: {
+                    definición: "Somos secuencias reguladoras de ADN que aumentan la eficiencia de los promotores. ",
+                    función_principal: "Aumentamos la eficiencia de los Promotores. Podemos estar localizados a gran distancia del gen que regulamos. Actuamos independientemente de nuestra orientación.",
+                    relacion_funcional: "Interactuamos con Factores de transcripción para activar genes específicos en tejidos concretos. "
+                },
+                silenciadores: {
+                    definición: "Somos secuencias de ADN que reprimen la transcripción génica. ",
+                    función_principal: "Reprimimos la expresión génica. Al igual que los Potenciadores, podemos estar localizados a distancia.",
+                    patología: "Mutaciones en nosotros pueden llevar a expresión aberrante de genes, como en el cáncer. "
+                },
+                "metilación del adn": { 
+                    definición: "Soy una modificación epigenética que implica la adición de un grupo metilo al ADN, típicamente en citosinas CpG, lo que usualmente inhibe la transcripción de genes. ",
+                    función_principal: "Generalmente, cuando me encuentro en regiones promotoras, estoy asociada con el silenciamiento génico a largo plazo.",
+                    relacion_funcional: "Controlo la accesibilidad del ADN a la transcripción junto con la Cromatina.  Errores en mí se asocian con el Síndrome de Rett. "
+                },
+                "arn nuclear (arnn)": { 
+                    definición: "Soy el transcrito inicial de un gen que incluye intrones y exones. ",
+                    función_principal: "Contengo tanto secuencias codificantes (exones) como no codificantes (intrones). Debo ser procesado para convertirme en ARNm maduro.",
+                    relacion_funcional: "El Empalme alternativo actúa sobre mí para generar diversidad proteica. "
+                },
+                "empalme alternativo": {
+                    definición: "Soy un proceso regulado que permite generar diferentes proteínas (Isoformas de empalme) a partir de un solo gen, mediante la combinación diferencial de exones del ARN nuclear. ",
+                    función_principal: "Aumento enormemente la capacidad codificante del genoma y la diversidad proteica.",
+                    importancia: "Es un mecanismo clave para la regulación génica y la complejidad biológica.",
+                    relacion_funcional: "Actúo sobre el ARN nuclear (ARNn) para producir diferentes Isoformas de empalme, generando diversidad proteica. "
+                },
+                "isoformas de empalme": {
+                    definición: "Somos variantes de proteínas generadas por empalme alternativo a partir de un solo gen. ",
+                    función_principal: "Aunque provenimos del mismo gen, podemos tener funciones diferentes debido a la inclusión o exclusión de ciertos exones.",
+                    relacion_funcional: "Somos el resultado del Empalme alternativo del ARN nuclear." //
+                },
+                inducción: {
+                    definición: "Soy un proceso por el cual un tejido (inductor) determina el destino de desarrollo de otro tejido adyacente (respondedor). ",
+                    función_principal: "Dirijo la diferenciación celular y la morfogénesis.",
+                    relacion_funcional: "Para que yo ocurra, el tejido respondedor debe tener Competencia.  Las Interacciones epitelio-mesénquima son un ejemplo clásico de mí. "
+                },
+                competencia: {
+                    definición: "Soy la capacidad de una célula o tejido para responder a señales inductivas específicas. ",
+                    función_principal: "Aseguro que solo las células correctas respondan a una señal inductiva particular.",
+                    relacion_funcional: "Soy un requisito para que la Inducción sea efectiva. "
+                },
+                "interacciones epitelio-mesénquima": {
+                    definición: "Somos un tipo fundamental de comunicación inductiva entre una capa epitelial y el tejido mesenquimatoso subyacente que regula la organogénesis. ",
+                    función_principal: "Regulamos la morfogénesis y diferenciación de numerosos órganos como riñón, pulmón o hígado. ",
+                    patología: "Fallos en nuestras interacciones pueden ser causados por teratógenos como la talidomida, llevando a Focomelia. "
+                },
+                "factores paracrinos": { 
+                    definición: "Somos moléculas señalizadoras secretadas por una célula que difunden y actúan sobre células vecinas. ",
+                    función_principal: "Mediamos la comunicación intercelular local, jugando roles cruciales en la Inducción y desarrollo.",
+                    familias_principales: "Incluimos familias como FGF, Hedgehog (ej. Vía SHH), WNT (ej. Vía WNT), y TGF-β."
+                },
+                // Vías SHH, WNT, Notch ya tienen entradas más detalladas con sus IDs 18, 19, 20.
+                // Patologías Capítulo 1
+                "síndrome de rett": { // ID 21
+                    definición: "Soy un trastorno del neurodesarrollo genético que afecta principalmente a niñas, causado por mutaciones en el gen MECP2, relacionado con la Metilación del ADN. ",
+                    causa: "Mutaciones en MECP2, una proteína que lee marcas de Metilación del ADN y regula la transcripción.",
+                    características: "Desarrollo inicial normal seguido de regresión de habilidades, movimientos manuales estereotipados, problemas respiratorios."
+                },
+                "síndrome de prader-willi": { // ID 22
+                    definición: "Soy un trastorno genético causado por un error en la impronta genética del cromosoma 15 paterno. ",
+                    causa: "Pérdida de expresión de genes paternos en 15q11-q13.",
+                    características: "Hipotonía neonatal, hiperfagia con obesidad, discapacidad intelectual leve."
+                },
+                "síndrome de angelman": { // ID 23
+                    definición: "Soy un trastorno neurogenético causado por un error en la impronta genética del cromosoma 15 materno (gen UBE3A). ",
+                    causa: "Pérdida de función de UBE3A materno en 15q11-q13.",
+                    características: "Retraso severo del desarrollo, ausencia de habla, ataxia, risa frecuente."
+                },
+                "cáncer (regulación génica)": { // ID 24
+                    definición: "El cáncer puede surgir por la expresión aberrante de genes debido a mutaciones en Promotores o Silenciadores, afectando el control del ciclo celular y la proliferación. ",
+                    causa: "Mutaciones en secuencias reguladoras (Promotores, Silenciadores, Potenciadores) o en Factores de transcripción.",
+                    consecuencias: "Proliferación celular descontrolada y formación de tumores."
+                },
+                "síndrome de alagille": { // ID 25
+                    definición: "Soy un trastorno genético multisistémico causado por mutaciones en la Vía Notch (genes JAG1 o NOTCH2), afectando órganos como el corazón y el hígado. ",
+                    causa: "Mutaciones en JAGGED1 o NOTCH2, componentes de la Vía Notch.",
+                    características: "Escasez de conductos biliares, cardiopatías, facies característica."
+                },
+                holoprosencefalia: { // ID 26
+                    definición: "Soy una malformación cerebral compleja debida a una falla en la Vía SHH que impide la correcta división del prosencéfalo (cerebro anterior). ",
+                    causa: "Disfunción de la Vía SHH u otros genes relacionados (SIX3, ZIC2).",
+                    características: "Desde ciclopia hasta defectos faciales menores, según la severidad."
+                },
+                craneosinostosis: { // ID 27
+                    definición: "Soy una condición causada por el cierre prematuro de una o más suturas craneales, a menudo debido a mutaciones en receptores de factores de crecimiento de fibroblastos (FGFR), relacionados con señales FGF. ",
+                    causa: "Mutaciones en genes FGFR, que son parte de vías de señalización mediadas por Factores paracrinos (FGFs).",
+                    consecuencias: "Forma anormal del cráneo y posible afectación del desarrollo cerebral."
+                },
+                "defectos del tubo neural": { // ID 28
+                    definición: "Soy un grupo de malformaciones congénitas del cerebro y la médula espinal (ej. anencefalia, espina bífida) que pueden ser causadas por mutaciones en la Vía WNT/PCP (Polaridad Celular Planar), alterando la convergencia y extensión celular durante el cierre del tubo neural. ",
+                    causa: "Factores genéticos (incluyendo mutaciones en la Vía WNT/PCP) y ambientales (deficiencia de ácido fólico).",
+                    importancia: "Son malformaciones graves del sistema nervioso central."
+                },
+                "focomelia por talidomida": { // ID 29
+                    definición: "Soy una malformación severa de las extremidades (miembros cortos o ausentes) causada por la exposición prenatal al fármaco talidomida. Se debe a una falla en las Interacciones epitelio-mesénquima cruciales para el desarrollo de las extremidades. ",
+                    causa: "Efecto teratogénico de la talidomida sobre las Interacciones epitelio-mesénquima.",
+                    importancia_histórica: "Un trágico ejemplo de los efectos de los teratógenos durante el desarrollo."
+                },
+                "síndrome de holt-oram": { // ID 30
+                    definición: "Soy un trastorno genético autosómico dominante caracterizado por malformaciones de las extremidades superiores (especialmente radiales) y defectos cardíacos congénitos, debido a alteraciones en genes de señalización como TBX5 (un Factor de transcripción). ",
+                    causa: "Mutaciones en el gen TBX5, un Factor de transcripción crucial para el desarrollo del corazón y las extremidades.",
+                    características: "Anomalías en pulgares, radio, y defectos cardíacos como comunicación interauricular o interventricular."
+                },
+
+                // CAPÍTULO 2
+                "células germinales primordiales": { // ID 31
+                    definición: "Somos células precursoras de los gametos que migran desde el Epiblasto, pasando por el Saco vitelino en la semana 2, hasta las Gónadas en desarrollo en la semana 5. ",
+                    función_principal: "Damos origen a los óvulos y espermatozoides.",
+                    semana_aparicion: "Semana 2 (origen en epiblasto), migración hasta semana 5.",
+                    relacion_con: "Epiblasto, Saco vitelino, Gónadas en desarrollo.",
+                    relacion_funcional: "Derivamos del Epiblasto y migramos a la gónada.  Errores en nuestra migración pueden causar Teratomas. "
+                },
+                epiblasto: { // ID 32
+                    definición: "Soy la capa superior del disco embrionario bilaminar durante la segunda semana. También origino todas las capas germinales (ectodermo, mesodermo, endodermo) y las Células Germinales Primordiales (CGP). ",
+                    función_principal: "Soy la fuente de todas las células del embrión y de las CGP.  En la tercera semana, mis células migran a través de la Estría primitiva. ",
+                    semana_aparicion: "Segunda semana (como parte del disco bilaminar). ",
+                    relacion_con: "Disco bilaminar, Hipoblasto, Estría primitiva , Cavidad amniótica, Amnioblastos.",
+                    objetivo_busqueda: "Busco formar el ectodermo, mesodermo y endodermo, así como las CGP. ",
+                    relacion_funcional: "Las Células Germinales Primordiales derivan de mí.  Formo la base de la Cavidad amniótica.  Los Amnioblastos derivan de mí. "
+                },
+                "estría primitiva": { // ID 33
+                    definición: "Soy un engrosamiento celular transitorio en la línea media de la superficie dorsal del Epiblasto del embrión, visible al inicio de la tercera semana (Capítulo 5) pero mi formación se inicia en la segunda semana tardía (Capítulo 2). Soy el punto de inicio de la gastrulación. ",
+                    función_principal: "Permito la migración (invaginación) de células del epiblasto hacia el interior del embrión para formar las tres capas germinativas: Endodermo embrionario y Mesodermo embrionario. Las células del epiblasto que no migran forman el Ectodermo embrionario. ",
+                    semana_aparicion: "Finales de la segunda e inicio de la tercera semana. ",
+                    relacion_con: "Epiblasto (me formo en él) , Nodo primitivo (en mi extremo cefálico) , Mesodermo, Endodermo, Ectodermo.",
+                    objetivo_busqueda: "Busco organizar la gastrulación y formar las tres capas germinativas. ",
+                    relacion_funcional: "Permito la migración de células del Epiblasto para formar el Mesodermo y el Endodermo.  El Nodo primitivo se encuentra en mi extremo craneal. Remanentes míos pueden dar lugar a Teratomas sacrococcígeos. "
+                },
+                "saco vitelino": { // ID 34 (General, ver específicos 93, 101, 103)
+                    definición: "Soy un anexo embrionario. En la semana 2, las CGP migran hacia mí antes de ir a las gónadas.  En la semana 3, el Alantoides evagina de mí. ",
+                    función_principal: "Sirvo de sitio temporal para las CGP  y contribuyo a la nutrición temprana y hematopoyesis.",
+                    semana_aparicion: "Desde la segunda semana (primario).",
+                    relacion_con: "Células germinales primordiales, Hipoblasto, Alantoides.",
+                    relacion_funcional: "El Hipoblasto forma el Saco vitelino primario.  El Alantoides es una evaginación mía. "
+                },
+                "gónadas en desarrollo": { // ID 35
+                    definición: "Somos los órganos (futuros ovarios o testículos) donde maduran las Células Germinales Primordiales (CGP) para convertirse en gametos. ",
+                    función_principal: "Albergar y permitir la maduración de las CGP.",
+                    semana_aparicion: "Las CGP llegan en la semana 5. ",
+                    relacion_con: "Células germinales primordiales, Meiosis, Citodiferenciación.",
+                    patología: "El Fallo gonadal prematuro , Síndrome de Turner , Síndrome de Klinefelter , Síndrome de Swyer  y Disgenesia gonadal  nos afectan."
+                },
+                 // ... (Resto de perfiles de Cap 2 y sus patologías - IDs 36 a 60) ...
+                // ... (Resto de perfiles de Cap 3 y sus patologías - IDs 61 a 88) ...
+                // ... (Resto de perfiles de Cap 4 y sus patologías - IDs 89 a 110) ...
+                // Capítulo 5 (Nuevos perfiles y actualizaciones) - IDs 111 a 138
+                "nodo primitivo": { // ID 111
+                    definición: "Soy una estructura engrosada localizada en el extremo cefálico de la Estría primitiva durante la tercera semana del desarrollo. ",
+                    función_principal: "Controlo la migración y diferenciación celular durante la gastrulación y dirijo el desarrollo axial del embrión.  Induzco la formación de la Notocorda y otras estructuras mediales. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Estría primitiva, Notocorda, Fosa primitiva. ",
+                    objetivo_busqueda: "Busco inducir la Notocorda y establecer el eje principal del cuerpo. ",
+                    relacion_funcional: "Dirijo la formación de la Notocorda.  Contengo la Fosa primitiva, por donde ingresan células. Una duplicación mía puede causar duplicación del eje embrionario. "
+                },
+                "fosa primitiva": { // ID 112
+                    definición: "Soy una depresión o indentación que se forma en el centro del Nodo primitivo durante la tercera semana. ",
+                    función_principal: "Sirvo como el sitio específico por donde las células del epiblasto se invaginan para formar el proceso notocordal y luego la Notocorda (mesodermo axial). Soy el inicio del canal notocordal. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Nodo primitivo (estoy dentro de él). ",
+                    objetivo_busqueda: "Busco ser el punto de partida para la formación de la Notocorda. ",
+                    relacion_funcional: "Soy la entrada al Canal notocordal, dentro del Nodo primitivo."
+                },
+                "canal notocordal": { // ID 113
+                    definición: "Soy un conducto o tubo celular temporal que se forma a partir de la invaginación de células a través de la Fosa primitiva del Nodo primitivo, extendiéndose cefálicamente en la línea media. ",
+                    función_principal: "Mi función es ser el precursor inmediato de la Notocorda definitiva. También dirijo la inducción del tubo neural. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Fosa primitiva (me origino de ella), Nodo primitivo. ",
+                    objetivo_busqueda: "Busco transformarme en la Notocorda. ",
+                    relacion_funcional: "Me formo desde la Fosa primitiva y me convierto en la Notocorda."
+                },
+                notocorda: { // ID 114
+                    definición: "Soy un cilindro mesodérmico axial que actúa como eje estructural embrionario. ",
+                    función_principal: "Induzco la formación del tubo neural a partir del ectodermo suprayacente y organizo la diferenciación de los somitas. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Ectodermo, Somitas. ",
+                    objetivo_busqueda: "Busco guiar el desarrollo axial. ",
+                    relacion_funcional: "El Nodo primitivo dirige mi formación.  Induzco al Ectodermo. Defectos en mí pueden causar anomalías axiales. "
+                },
+                "endodermo embrionario": { // ID 115
+                    definición: "Soy la capa germinal más interna del embrión, derivada del epiblasto durante la gastrulación en la tercera semana. ",
+                    función_principal: "Formaré el revestimiento epitelial del tubo digestivo y glándulas asociadas (hígado, páncreas), el tracto respiratorio, la vejiga urinaria. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Epiblasto (mi origen), Mesodermo embrionario. ",
+                    objetivo_busqueda: "Busco formar el intestino primitivo. ",
+                    relacion_funcional: "Me formo a partir del Epiblasto durante la gastrulación, mediada por la Estría primitiva."
+                },
+                "mesodermo embrionario": { // ID 116
+                    definición: "Soy la capa germinal media, situada entre Ectodermo y Endodermo, originada del epiblasto durante la gastrulación en la tercera semana. ",
+                    función_principal: "Daré origen a músculo, hueso, sangre, sistema urogenital, cardiovascular y más. Permito la diferenciación estructural y funcional. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Epiblasto (mi origen), Endodermo, Ectodermo. ",
+                    objetivo_busqueda: "Busco formar somitas, vasos y músculos. ",
+                    relacion_funcional: "La Estría primitiva permite mi migración y formación.  Me diferencio en Mesodermo paraxial, Intermedio y Lateral."
+                },
+                "ectodermo embrionario": { // ID 117
+                    definición: "Soy la capa germinal más externa del embrión, derivada de las células del epiblasto que no migran a través de la Estría primitiva durante la gastrulación en la tercera semana. ",
+                    función_principal: "Formaré la epidermis y sus anexos, el sistema nervioso central (encéfalo, médula espinal) y periférico, y órganos sensoriales. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Notocorda (me induce), Tubo neural (me formo en él). ",
+                    objetivo_busqueda: "Busco formar la epidermis y el SNC. ",
+                    relacion_funcional: "La Notocorda me induce para formar el Tubo neural. "
+                },
+                "placa precordal": { // ID 118
+                    definición: "Soy un pequeño grupo de células mesodérmicas situadas entre el extremo cefálico de la Notocorda y la Membrana bucofaríngea. ",
+                    función_principal: "Induzco al encéfalo y guío el desarrollo cefálico. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Notocorda, encéfalo en desarrollo, Membrana bucofaríngea. ",
+                    objetivo_busqueda: "Busco formar estructuras craneales. ",
+                    relacion_funcional: "Soy un importante inductor para el desarrollo del prosencéfalo."
+                },
+                "membrana bucofaríngea": { // ID 119
+                    definición: "Soy una estructura bilaminar (Ectodermo y Endodermo fusionados, sin Mesodermo) en la región cefálica, que marca el sitio futuro de la boca. ",
+                    función_principal: "Delimito la región cefálica anterior y separo el estomodeo (boca primitiva) de la faringe.  Me romperé para comunicar la cavidad oral y la faringe.",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Placa precordal, faringe. ",
+                    objetivo_busqueda: "Busco abrir paso al estomodeo. ",
+                    relacion_funcional: "Seré el sitio de la futura boca (Estomodeo). "
+                },
+                "membrana cloacal": { // ID 120
+                    definición: "Soy una estructura bilaminar (Ectodermo y Endodermo fusionados, sin Mesodermo) en la región caudal del embrión. ",
+                    función_principal: "Marco el sitio futuro del ano y aberturas urogenitales. Soy un cierre temporal de la región anal. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Mesodermo caudal, intestino posterior (cloaca). ",
+                    objetivo_busqueda: "Busco abrir el ano embrionario y las salidas urogenitales. ",
+                    relacion_funcional: "Seré el sitio del futuro ano.  Su persistencia o ruptura anómala causa Anomalías cloacales. "
+                },
+                alantoides: { // ID 121
+                    definición: "Soy una pequeña evaginación del endodermo del Saco vitelino que se extiende hacia el interior del Pedículo de fijación durante la tercera semana. ",
+                    función_principal: "Aunque rudimentario en humanos, participo en la formación del cordón umbilical y la vejiga. Mis vasos sanguíneos se convierten en los vasos umbilicales. Mi porción proximal forma el uraco. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Pedículo de fijación, Saco vitelino. ",
+                    objetivo_busqueda: "Busco contribuir al desarrollo urinario y formar los vasos umbilicales. ",
+                    relacion_funcional: "Participo en la formación del Cordón umbilical.  La persistencia de mi luz puede dar lugar a una Fístula alantoidea (uracal). "
+                },
+                "mesodermo paraxial": { // ID 122
+                    definición: "Soy la región del Mesodermo embrionario que se organiza en columnas longitudinales a cada lado de la Notocorda. ",
+                    función_principal: "Me segmento craneocaudalmente para formar los Somitas, que darán origen al esqueleto axial (vértebras, costillas), la musculatura esquelética y la dermis dorsal. Proporciono soporte y segmentación axial. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Notocorda, Somitas. ",
+                    objetivo_busqueda: "Busco formar el esqueleto axial. ",
+                    relacion_funcional: "Me segmento para formar los Somitas.  Mi hipoplasia puede causar problemas de desarrollo óseo-muscular. "
+                },
+                "mesodermo intermedio": { // ID 123
+                    definición: "Soy una estrecha banda de Mesodermo embrionario que conecta el Mesodermo paraxial con el Mesodermo lateral. Formo estructuras urogenitales. ",
+                    función_principal: "Me diferencio para formar la mayor parte del sistema urogenital, incluyendo riñones y gónadas (aunque las CGP tienen otro origen). ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Mesodermo lateral, Somitas. ",
+                    objetivo_busqueda: "Busco formar el sistema urinario. ",
+                    relacion_funcional: "Conecto el Mesodermo paraxial con el Lateral. Doy origen a estructuras urogenitales."
+                },
+                "mesodermo lateral": { // ID 124
+                    definición: "Soy la porción más lateral del Mesodermo embrionario. Me divido en dos hojas (Somatopleura y Esplacnopleura) que delimitan el celoma intraembrionario (futuras cavidades corporales). ",
+                    función_principal: "La Somatopleura forma la dermis de la pared corporal, huesos de extremidades y revestimiento parietal de cavidades. La Esplacnopleura forma el músculo liso del tubo digestivo, corazón y revestimiento visceral. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Mesodermo intermedio, Somatopleura, Esplacnopleura. ",
+                    objetivo_busqueda: "Busco formar las cavidades corporales, serosas y mesenterios. ",
+                    relacion_funcional: "Me divido para formar Somatopleura y Esplacnopleura, delimitando las futuras cavidades corporales.  Defectos en mí pueden causar malformaciones cardíacas o de las cavidades. "
+                },
+                somatopleura: { // ID 125
+                    definición: "Soy una de las dos capas del Mesodermo lateral, formada por la asociación de su hoja parietal con el Ectodermo suprayacente. ",
+                    función_principal: "Contribuyo a la formación de la pared corporal lateral y ventral, incluyendo la dermis, huesos de extremidades y el revestimiento parietal de las cavidades corporales. Proporciono soporte somático. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Mesodermo lateral (soy su parte parietal), Ectodermo. ",
+                    objetivo_busqueda: "Busco formar la pared corporal. ",
+                    relacion_funcional: "Derivo del Mesodermo lateral y junto con el ectodermo formo la pared del cuerpo."
+                },
+                esplacnopleura: { // ID 126
+                    definición: "Soy una de las dos capas del Mesodermo lateral, formada por la asociación de su hoja visceral con el Endodermo subyacente. ",
+                    función_principal: "Doy origen al músculo liso, tejido conectivo y vasos del tubo digestivo, así como al corazón, revestimiento visceral de cavidades y mesenterios. Proporciono soporte visceral. ",
+                    semana_aparicion: "Tercera semana. ",
+                    relacion_con: "Mesodermo lateral (soy su parte visceral), Endodermo, Intestino. ",
+                    objetivo_busqueda: "Busco formar el intestino y los vasos mesentéricos. ",
+                    relacion_funcional: "Derivo del Mesodermo lateral y junto con el endodermo formo la pared del tubo digestivo."
+                },
+                somitas: { // ID 127
+                    definición: "Somos bloques segmentados de Mesodermo paraxial que nos formamos a ambos lados del Tubo neural y la Notocorda. ",
+                    función_principal: "Damos origen al esqueleto axial (vértebras, costillas), la musculatura esquelética del tronco y extremidades, y la dermis dorsal. Establecemos la segmentación axial. ",
+                    semana_aparicion: "Finales de la tercera semana. ",
+                    relacion_con: "Notocorda, Mesodermo paraxial. ",
+                    objetivo_busqueda: "Buscamos formar la columna y la musculatura. ",
+                    relacion_funcional: "El Mesodermo paraxial se segmenta para formarnos.  La agenesia de nosotros causa falta de formación vertebral. "
+                },
+                "canal neurentérico": { // ID 128
+                    definición: "Soy una comunicación o conducto temporal y transitorio entre la cavidad amniótica y el saco vitelino, a través de la fosa primitiva. ",
+                    función_principal: "Mi función es temporal en el desarrollo axial, permitiendo el paso de líquido entre cavidades. ",
+                    semana_aparicion: "Tercera semana (muy transitorio). ",
+                    relacion_con: "Notocorda, Tubo neural, Cavidad amniótica, Saco vitelino. ",
+                    objetivo_busqueda: "Busco desaparecer luego. ",
+                    relacion_funcional: "Conecto temporalmente la cavidad amniótica y el saco vitelino."
+                },
+                // Línea Primitiva (alias de Estría Primitiva ID 33)
+                // Patologías Capítulo 5
+                "teratomas sacrococcígeos": { // ID 129
+                    definición: "Soy un tipo de Teratoma que se localiza en la región sacrococcígea, originado de remanentes de la Estría primitiva. ",
+                    causa: "Persistencia de células pluripotentes de la Estría primitiva.",
+                    características: "Tumor congénito común en recién nacidos, puede ser benigno o maligno.",
+                    relacion_funcional: "Es un Teratoma (ver ID 51) específico, relacionado con la Estría primitiva."
+                },
+                "gastrulación incompleta": { // ID 130
+                    definición: "Soy una falla en la correcta formación o migración de células a través de la Estría primitiva, resultando en deficiente formación de capas germinativas. ",
+                    causa: "Defectos en la Estría primitiva o señalización anómala.",
+                    consecuencias: "Malformaciones congénitas severas, a menudo incompatibles con la vida.",
+                    relacion_funcional: "Fallo en gastrulación, afectando Endodermo, Mesodermo y Ectodermo."
+                },
+                "defectos de notocorda": { // ID 131
+                    definición: "Soy un grupo de anomalías por formación, estructura o función defectuosa de la Notocorda. ",
+                    causa: "Factores genéticos o teratogénicos afectando el Nodo primitivo o Canal notocordal.",
+                    consecuencias: "Malformaciones del eje axial (columna) y defectos en inducción del SNC.",
+                    relacion_funcional: "Problemas en la Notocorda afectan inducción del Ectodermo y organización de Somitas."
+                },
+                "situs inversus": { // ID 132
+                    definición: "Soy una condición con órganos internos en disposición en espejo. Relacionada con alteraciones en cilios del Nodo primitivo. ",
+                    causa: "Alteraciones en el establecimiento de la lateralidad izquierda-derecha durante la gastrulación (función ciliar del Nodo primitivo).",
+                    tipos: "Totalis (todos los órganos) o partialis. Puede asociarse con síndrome de Kartagener.",
+                    relacion_funcional: "Anomalía en la función del Nodo primitivo."
+                },
+                "agenesia de somitas": { // ID 133
+                    definición: "Ausencia de formación de uno o más Somitas. ",
+                    causa: "Defectos en Mesodermo paraxial o señales inductivas de Notocorda/Tubo neural.",
+                    consecuencias: "Falta de desarrollo de vértebras, costillas o músculos segmentarios.",
+                    relacion_funcional: "Falla en formación de Somitas a partir del Mesodermo paraxial."
+                },
+                "defectos del mesodermo lateral": { // ID 134
+                    definición: "Malformaciones por desarrollo anormal del Mesodermo lateral. ",
+                    causa: "Problemas en especificación, migración o diferenciación del mesodermo lateral.",
+                    consecuencias: "Cardiopatías congénitas, malformaciones de pared corporal ventral (onfalocele), defectos de extremidades.",
+                    relacion_funcional: "Problemas en Mesodermo lateral y sus derivados (Somatopleura, Esplacnopleura)."
+                },
+                "anomalías cloacales": { // ID 135
+                    definición: "Defectos en desarrollo de la cloaca o persistencia de Membrana cloacal. ",
+                    causa: "Fallos en la división de la cloaca por el septo urorrectal o problemas con la Membrana cloacal.",
+                    consecuencias: "Malformaciones anorrectales y urogenitales complejas.",
+                    relacion_funcional: "Defectos de la Membrana cloacal y la cloaca."
+                },
+                "fístula alantoidea (uracal)": { // ID 136
+                    definición: "Persistencia del uraco (remanente del Alantoides) que conecta vejiga fetal con ombligo. ",
+                    tipos: "Fístula completa (drenaje de orina por ombligo), quiste uracal, seno uracal.",
+                    consecuencias: "Drenaje umbilical, infecciones.",
+                    relacion_funcional: "Persistencia anómala del Alantoides."
+                },
+                "duplicación del nodo primitivo": { // ID 137
+                    definición: "Anomalía rara con formación de dos Nodos primitivos. ",
+                    causa: "Alteración en mecanismos que establecen un único centro organizador.",
+                    consecuencias: "Formación de dos ejes embrionarios, duplicación de estructuras axiales, gemelos siameses.",
+                    relacion_funcional: "Duplicación del Nodo primitivo y Estría primitiva."
+                },
+                "mesodermo paraxial hipoplásico": { // ID 138
+                    definición: "Desarrollo reducido del Mesodermo paraxial. ",
+                    causa: "Producción deficiente de células del mesodermo paraxial o problemas en su proliferación.",
+                    consecuencias: "Formación deficiente de Somitas, anomalías del esqueleto axial y musculatura.",
+                    relacion_funcional: "Defecto en desarrollo del Mesodermo paraxial, afectando Somitas."
+                }
+            };
+
+
+            const profileKey = profile.name.toLowerCase();
+            const profileKnowledge = knowledgeBase[profileKey];
+
+            const intents = {
+                función: ["función", "funciona", "sirve", "hace", "papel", "rol", "trabajo", "objetivo", "proposito", "función principal"],
+                definición: ["qué eres", "que eres", "define", "definición", "describete", "descripcion", "quien eres"],
+                estructura: ["estructura", "compuesto", "formado", "partes", "componentes", "organización", "cómo soy", "constitucion"],
+                importancia: ["importante", "importancia", "crucial", "esencial", "necesario", "vital", "relevancia", "significado"],
+                relación: ["relaciona", "interactúa", "conecta", "trabaja con", "vincula", "asocia", "colabora", "nexo", "relacion funcional", "relación con"],
+                desarrollo: ["desarrollo", "embriología", "formación", "diferenciación", "embrión", "ontogenia", "cómo me formo", "origen embrionario", "proceso siguiente", "evolución"],
+                patología: ["enfermedad", "patología", "síndrome asociado", "trastorno", "alteración", "problema", "defecto", "qué pasa si fallo", "anomalia"],
+                mecanismo: ["mecanismo", "cómo funciona", "proceso de", "vía de", "cascada", "señalización", "operación", "funcionamiento"], 
+                síntomas: ["síntomas", "características clínicas", "signos", "manifestaciones", "presenta", "cuadro clínico", "indicios"],
+                causa: ["causa", "origen", "por qué ocurre", "razón", "etiología", "provoca", "genera", "motivo"],
+                tratamiento: ["tratamiento", "cura", "terapia", "manejo", "medicamento", "tratar", "solución", "remedio", "abordaje"],
+                tipos: ["tipos", "clases", "variedades", "formas", "clasificación", "divisiones"],
+                genes: ["genes implicados", "genética", "adn", "mutación", "alelo", "cromosoma"],
+                migracion: ["migración", "dónde vas", "recorrido", "viaje", "movimiento"], 
+                etapas: ["etapas", "fases", "pasos", "proceso clave"], 
+                localización: ["dónde estás", "ubicación", "localización", "donde ocurre", "donde te encuentras"],
+                semana_aparicion: ["cuándo apareces", "en qué semana", "semana de aparición", "momento de aparición", "cuándo te formas"],
+                objetivo_busqueda: ["qué buscas", "cuál es tu meta", "objetivo", "propósito final", "meta", "qué quieres lograr"],
+                gametogénesis_afectada: ["cómo afecta gametogénesis", "problema gametos", "efecto en gametos"],
+                consecuencias: ["consecuencias", "qué pasa después", "resultado", "efecto", "qué resulta"],
+                general: ["dime más", "explica", "cuéntame", "información", "detalles", "general", "resumen", "idea principal", "salúdame", "qué tal", "otro dato"]
+            };
+
+            let detectedIntent = null;
+            let bestMatchScore = 0;
+            let matchedKeywordForIntent = "";
+
+            for (const [intent, keywords] of Object.entries(intents)) {
+                for (const keyword of keywords) {
+                    if (message.includes(keyword)) {
+                        let currentScore = keyword.length; 
+                        if (keywords[0] === keyword) { 
+                           currentScore += keywords[0].length * 0.5;
+                        }
+                        if (currentScore > bestMatchScore) {
+                            bestMatchScore = currentScore;
+                            detectedIntent = intent;
+                            matchedKeywordForIntent = keyword; 
+                        }
+                    }
+                }
+            }
+            
+            if ((message.includes("hola") || message.includes("hi") || message.includes("saludos") || message.includes("qué tal")) && (bestMatchScore < 3 || detectedIntent === "general")) {
+                const specificGreeting = profileKnowledge?.definición ? `Soy ${profile.name}. ${profileKnowledge.definición.split('.')[0] + '.'}` : `Soy ${profile.name}. ${profile.description.split('.')[0] + '.'}`;
+                return `¡Hola! ${specificGreeting} ¿Sobre qué aspecto específico te gustaría que conversemos hoy? (ej. mi función, importancia, relación con otros, semana de aparición, etc.)`;
+            }
+
+            if (profileKnowledge && detectedIntent && profileKnowledge[detectedIntent]) {
+                const intentKeyToUse = (detectedIntent === "relación" && profileKnowledge.relacion_funcional) ? "relacion_funcional" : detectedIntent;
+                return `Respecto a mi ${intentKeyToUse.replace(/_/g, " ")}, te comento: ${profileKnowledge[intentKeyToUse]}`;
+            }
+             if (profileKnowledge && detectedIntent === "relación" && profileKnowledge.relacion_funcional) { 
+                return `En cuanto a mi relación funcional: ${profileKnowledge.relacion_funcional}`;
+            }
+            
+            if (profileKnowledge && (detectedIntent === "general" || (bestMatchScore < 2 && detectedIntent))) { 
+                 let summary = `Soy ${profile.name}. ${profileKnowledge?.definición ? profileKnowledge.definición.split('.')[0] + '.' : profile.description.split('.')[0] + '.'}`;
+                const KbaseKeys = Object.keys(profileKnowledge);
+                const availableAspects = KbaseKeys.filter(k => k !== 'definición' && profileKnowledge[k] && typeof profileKnowledge[k] === 'string'); 
+                if(availableAspects.length > 0){
+                    const suggestions = availableAspects.sort(() => 0.5 - Math.random()).slice(0, 2).map(s => s.replace(/_/g, " ")).join(' o mi '); 
+                    summary += ` Podríamos hablar sobre mi ${suggestions}, si te parece.`;
+                } else {
+                    summary += ` Pregúntame cualquier otra cosa que te interese.`;
+                }
+                return summary;
+            }
+            
+            if (profileKnowledge && detectedIntent && bestMatchScore > 0) {
+                let fallbackResponse = `No tengo un dato específico sobre "${matchedKeywordForIntent}" o "${detectedIntent.replace(/_/g, " ")}" para ${profile.name}. `;
+                const availableData = Object.keys(profileKnowledge).filter(k => k !== 'definición' && k !== detectedIntent && profileKnowledge[k] && typeof profileKnowledge[k] === 'string');
+                if (availableData.length > 0) {
+                    const randomAspect = availableData[Math.floor(Math.random() * availableData.length)];
+                    fallbackResponse += `Pero, ¿te interesaría saber sobre mi ${randomAspect.replace(/_/g, " ")}? Te cuento: ${profileKnowledge[randomAspect]}.`;
+                } else {
+                    fallbackResponse += `Te puedo dar mi descripción general: ${profileKnowledge.definición || profile.description}.`;
+                }
+                return fallbackResponse;
+            }
+
+            if (profile.keywords) {
+                for (const keyword of profile.keywords) {
+                    if (message.includes(keyword.toLowerCase())) {
+                        return `¡Interesante que menciones "${keyword}"! En mi contexto como ${profile.name}, "${keyword}" es relevante. Por ejemplo, ${profileKnowledge?.definición ? profileKnowledge.definición.split('.')[0] + '.' : profile.description.split('.')[0] + '.'} ¿Quieres que profundice en cómo me relaciono con "${keyword}" o quizás mi función general?`;
+                    }
+                }
+            }
+
+            if (message.includes("gracias") || message.includes("thanks")) {
+                return `¡De nada! Ha sido un placer ayudarte a entender más sobre ${profile.name}. ¿Hay algo más en lo que pueda ayudarte, quizás sobre mi ${profileKnowledge?.relacion_funcional ? 'relación funcional' : (profileKnowledge?.importancia ? 'importancia' : 'estructura')}?`;
+            }
+            if (message.includes("adiós") || message.includes("chao") || message.includes("hasta luego")) {
+                return `¡Entendido! Ha sido un placer charlar sobre ${profile.name}. ¡Sigue explorando el fascinante mundo de la embriología! Hasta pronto.`;
+            }
+
+            const educationalResponses = [
+                `Sobre tu consulta de ${profile.name}, puedo decirte que ${profileKnowledge?.definición ? profileKnowledge.definición.split('.')[0] + '.' : profile.description.split('.')[0] + '.'}. Este es un punto clave en el ${profile.chapter}. ¿Te gustaría saber más sobre mi ${profileKnowledge?.función_principal ? 'función principal' : (profileKnowledge?.causa ? 'causa' : 'estructura')} o alguna patología asociada si es el caso?`,
+                `Me alegra tu interés en ${profile.name}. Como ${profile.type}, soy de importancia ${profile.importance.toLowerCase()} porque ${profileKnowledge?.importancia || profile.description.split('.')[0] + '.'}. ¿Te interesa profundizar en mi ${profileKnowledge?.mecanismo ? 'mecanismo' : (profileKnowledge?.desarrollo ? 'desarrollo' : 'relación con otras estructuras')}?`,
+                `¡Excelente pregunta acerca de ${profile.name}! En el desarrollo embrionario, juego un papel crucial. ${profileKnowledge?.definición ? profileKnowledge.definición.split('.')[0] + '.' : profile.description.split('.')[0] + '.'}. ¿Te gustaría que exploremos mi ${profileKnowledge?.relacion_funcional ? 'relación funcional' : (profileKnowledge?.estructura ? 'estructura' : 'importancia')} más a fondo?`
+            ];
+            return educationalResponses[Math.floor(Math.random() * educationalResponses.length)];
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            
+            if (!text || !currentChatProfile || isTyping) return;
+            
+            if (!chatMessages[currentChatProfile.id]) chatMessages[currentChatProfile.id] = []; 
+            chatMessages[currentChatProfile.id].push({ sender: 'user', text: text });
+            input.value = '';
+            loadChatMessages(); 
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(text, currentChatProfile);
+                 if (!chatMessages[currentChatProfile.id]) chatMessages[currentChatProfile.id] = [];
+                chatMessages[currentChatProfile.id].push({ sender: 'ai', text: aiResponse });
+                hideTypingIndicator();
+                loadChatMessages();
+            }, 1000 + Math.random() * 1000); 
+        }
+
+        function showTypingIndicator() {
+            isTyping = true;
+            loadChatMessages(); 
+        }
+
+        function hideTypingIndicator() {
+            isTyping = false;
+        }
+
+        function switchTab(tabName, clickedButton) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+            
+            const activeTabContent = document.getElementById(tabName);
+            if (activeTabContent) activeTabContent.classList.add('active');
+            
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            } else { 
+                 const targetTabButton = Array.from(document.querySelectorAll('.nav-tab')).find(btn => 
+                    btn.textContent.toLowerCase() === tabName.toLowerCase() || 
+                    (tabName === 'swipe' && btn.textContent.toLowerCase() === 'descubrir')
+                 );
+                 if(targetTabButton) targetTabButton.classList.add('active');
+            }
+
+            if (tabName === 'chat' && !currentChatProfile) {
+                const chatMessagesContainer = document.getElementById('chat-messages');
+                const emptyStateChat = chatMessagesContainer.querySelector('.empty-state');
+                if (!emptyStateChat) {
+                    chatMessagesContainer.innerHTML = '<div class="empty-state"><h3>Selecciona un match</h3><p>Elige un match para empezar a chatear</p></div>';
+                } else {
+                   if(emptyStateChat) emptyStateChat.style.display = 'flex';
+                }
+                const chatHeader = document.getElementById('chat-header');
+                const chatInput = document.getElementById('chat-input');
+                if(chatHeader) chatHeader.style.display = 'none';
+                if(chatInput) chatInput.style.display = 'none';
+
+            } else if (tabName === 'matches') {
+                loadMatches(); 
+            } else if (tabName === 'swipe') {
+                if(currentCardIndex >= profiles.length && emptySwipeState) { 
+                    emptySwipeState.style.display = 'flex';
+                } else if (emptySwipeState) {
+                     emptySwipeState.style.display = 'none';
+                }
+                updateActionButtonsState();
+            }
+        }
+
+        function closeMatchPopup() {
+            document.getElementById('match-popup').style.display = 'none';
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
